@@ -1,0 +1,58 @@
+# Documentation can be found here: https://goreleaser.com
+
+before:
+  hooks:
+    - go mod tidy
+builds:
+  - main: ./cmd/aws-knox/main.go
+    binary: knox
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    flags:
+      - -trimpath
+    ldflags:
+      - "-s -w -X github.com/null93/aws-knox/internal.Version={{ .Version }}"
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  name_template: "{{ .Version }}"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+
+nfpms:
+  - file_name_template: "{{ .ConventionalFileName }}"
+    id: packages
+    homepage: https://github.com/null93/aws-knox
+    description: AWS credential process helper
+    maintainer: Rafael Grigorian <rafael@grigorian.org>
+    vendor: null93
+    bindir: /usr/bin
+    section: utils
+    formats:
+      - apk
+      - deb
+      - rpm
+      - archlinux
+
+brews:
+  - repository:
+      owner: null93
+      name: homebrew-tap
+    folder: Formula
+    goarm: "7"
+    homepage: https://github.com/null93/aws-knox
+    description: AWS credential process helper
+    test: |
+      system "#{bin}/knox -v"
