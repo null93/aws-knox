@@ -103,12 +103,18 @@ Recommended configuration for `~/.aws/config`:
 
 ```
 [default]
+region = us-east-1
+output = json
 credential_process = knox creds select
 
 [profile last]
+region = us-east-1
+output = json
 credential_process = knox creds last-used
 
 [profile pick]
+region = us-east-1
+output = json
 credential_process = knox select
 
 [sso-session development-sso]
