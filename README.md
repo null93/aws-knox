@@ -126,3 +126,19 @@ sso_region = us-east-1
 sso_registration_scopes = sso:account:access
 sso_start_url = https://d-0000000000.awsapps.com/start
 ```
+
+## Example
+
+```
+function ssh-aws () {
+    if [[ $# -ne 1 ]]; then
+        echo "Usage: ssh-aws <instance-id>"
+        return 1
+    fi
+    aws --profile pick ssm start-session --target $1 --document-name AWS-StartInteractiveCommand --parameters command="sudo su - \`id -un 9001\`"
+}
+```
+
+```
+ssh-aws i-00000000000000000
+```
