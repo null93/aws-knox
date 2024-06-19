@@ -96,3 +96,33 @@ $ knox clean creds sso -a
   rm ./aws-knox-1.0.0-1-x86_64.pkg.tar.zst
   ```
 </details>
+
+## Setup
+
+Recommended configuration for `~/.aws/config`:
+
+```
+[default]
+credential_process = knox creds select
+
+[profile last]
+credential_process = knox creds last-used
+
+[profile pick]
+credential_process = knox select
+
+[sso-session development-sso]
+sso_region = us-east-1
+sso_registration_scopes = sso:account:access
+sso_start_url = https://d-2222222222.awsapps.com/start
+
+[sso-session staging-sso]
+sso_region = us-east-1
+sso_registration_scopes = sso:account:access
+sso_start_url = https://d-1111111111.awsapps.com/start
+
+[sso-session production-sso]
+sso_region = us-east-1
+sso_registration_scopes = sso:account:access
+sso_start_url = https://d-0000000000.awsapps.com/start
+```
