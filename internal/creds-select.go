@@ -36,6 +36,24 @@ var credsSelectCmd = &cobra.Command{
 			ExitWithError(3, "failed to pick role credentials", err)
 		}
 		selectedRole := selection.Value.(credentials.Role)
+		if selectedRole.Credentials.IsExpired() {
+			sessions, err := credentials.GetSessions()
+			if err != nil {
+				ExitWithError(2, "failed to parse sso sessions", err)
+			}
+			session := sessions.FindByName(selectedRole.SessionName)
+			if session == nil {
+				ExitWithError(3, "failed to find sso session " + selectedRole.SessionName, err)
+			}
+			err = session.RefreshRoleCredentials(&selectedRole)
+			if err != nil {
+				ExitWithError(4, "failed to get credentials", err)
+			}
+			err = selectedRole.Credentials.Save(session.Name, selectedRole.CacheKey())
+			if err != nil {
+				ExitWithError(5, "failed to save credentials", err)
+			}
+		}
 		serialized, err := selectedRole.Credentials.ToJSON()
 		if err != nil {
 			ExitWithError(4, "failed to serialize role credentials", err)
