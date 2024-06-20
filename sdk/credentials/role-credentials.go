@@ -104,12 +104,12 @@ func GetLastUsedRole() (Role, error) {
 		return Role{}, err
 	}
 	parts := strings.Split(string(contents), "_")
-	if len(parts) != 3 {
+	if len(parts) < 3 {
 		return Role{}, fmt.Errorf("invalid last used role")
 	}
 	region := parts[0]
 	accountId := parts[1]
-	roleName := parts[2]
+	roleName := strings.Join(parts[2:], "_")
 	role := Role{
 		Region:    region,
 		AccountId: accountId,
@@ -139,12 +139,12 @@ func GetSavedRolesWithCredentials() (Roles, error) {
 		if !file.IsDir() && filepath.Ext(filename) == ".json" {
 			contents, err := os.ReadFile(filepath.Join(cacheDir, filename))
 			parts := strings.Split(filename, "_")
-			if len(parts) != 3 {
+			if len(parts) < 3 {
 				continue
 			}
 			region := parts[0]
 			accountId := parts[1]
-			roleName := strings.TrimSuffix(parts[2], ".json")
+			roleName := strings.TrimSuffix(strings.Join(parts[2:], "_"), ".json")
 			if err != nil {
 				return nil, err
 			}
