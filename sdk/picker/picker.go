@@ -114,8 +114,6 @@ func (p *picker) filter() {
 }
 
 func (p *picker) render() {
-	ansi.SaveCursor()
-	defer ansi.RestoreCursor()
 	ansi.ClearDown()
 	lightGray := color.ToForeground(LightGrayColor).Decorator()
 	darkGray := color.ToForeground(DarkGrayColor).Decorator()
@@ -165,14 +163,13 @@ func (p *picker) render() {
 			color.ResetStyle,
 	)
 	DefaultStyle.Printfln("")
+	ansi.MoveCursorUp(7 + len(p.filtered))
 }
 
 func (p *picker) Pick() *option {
-	ansi.AlternativeBuffer()
 	ansi.HideCursor()
-	defer ansi.ShowCursor()
 	defer ansi.ClearDown()
-	defer ansi.NormalBuffer()
+	defer ansi.ShowCursor()
 	p.render()
 	keyboard.Listen(func(key keys.Key) (stop bool, err error) {
 		if key.Code == keys.CtrlC || key.Code == keys.Escape {

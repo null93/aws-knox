@@ -41,3 +41,7 @@ func AlternativeBuffer() {
 func NormalBuffer() {
 	fmt.Fprint(Writer, "\033[?1049l")
 }
+
+func MoveCursorUp(n int) {
+	fmt.Fprintf(Writer, "\033[%dA", n)
+}
