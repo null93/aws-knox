@@ -28,7 +28,7 @@ var cleanCmd = &cobra.Command{
 			}
 			for _, role := range roles {
 				if role.Credentials.IsExpired() || cleanAll {
-					err := role.Credentials.DeleteCache(role.CacheKey())
+					err := role.Credentials.DeleteCache(role.SessionName, role.CacheKey())
 					if err != nil {
 						ExitWithError(2, "failed to delete role credentials", err)
 					}

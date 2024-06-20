@@ -37,7 +37,7 @@ func findRoleCredentials(r Role) (*RoleCredentials, error) {
 	if err != nil {
 		return nil, err
 	}
-	cachePath := filepath.Join(homedir, RoleCredentialsCachePath, cacheKey+".json")
+	cachePath := filepath.Join(homedir, RoleCredentialsCachePath, r.SessionName, cacheKey+".json")
 	if _, err := os.Stat(cachePath); err == nil {
 		contents, err := ioutil.ReadFile(cachePath)
 		if err != nil {
@@ -56,15 +56,15 @@ func (r *RoleCredentials) IsExpired() bool {
 	return r.Expiration.Before(time.Now())
 }
 
-func (r *RoleCredentials) Save(key string) error {
+func (r *RoleCredentials) Save(sessionName, key string) error {
 	homedir, err := os.UserHomeDir()
 	if err != nil {
 		return err
 	}
-	if err := os.MkdirAll(filepath.Join(homedir, RoleCredentialsCachePath), 0700); err != nil {
+	if err := os.MkdirAll(filepath.Join(homedir, RoleCredentialsCachePath, sessionName), 0700); err != nil {
 		return err
 	}
-	cachePath := filepath.Join(homedir, RoleCredentialsCachePath, key+".json")
+	cachePath := filepath.Join(homedir, RoleCredentialsCachePath, sessionName, key+".json")
 	contents, err := json.Marshal(r)
 	if err != nil {
 		return err
@@ -72,12 +72,12 @@ func (r *RoleCredentials) Save(key string) error {
 	return ioutil.WriteFile(cachePath, contents, 0600)
 }
 
-func (r *RoleCredentials) DeleteCache(key string) error {
+func (r *RoleCredentials) DeleteCache(sessionName, key string) error {
 	homedir, err := os.UserHomeDir()
 	if err != nil {
 		return err
 	}
-	cachePath := filepath.Join(homedir, RoleCredentialsCachePath, key+".json")
+	cachePath := filepath.Join(homedir, RoleCredentialsCachePath, sessionName, key+".json")
 	return os.Remove(cachePath)
 }
 
@@ -90,7 +90,7 @@ func (r *Role) MarkLastUsed() error {
 		return err
 	}
 	lastUsedPath := filepath.Join(homedir, KnoxPath, "last-used")
-	return ioutil.WriteFile(lastUsedPath, []byte(r.CacheKey()), 0600)
+	return ioutil.WriteFile(lastUsedPath, []byte(r.SessionName+"\n"+r.CacheKey()), 0600)
 }
 
 func GetLastUsedRole() (Role, error) {
@@ -103,7 +103,12 @@ func GetLastUsedRole() (Role, error) {
 	if err != nil {
 		return Role{}, err
 	}
-	parts := strings.Split(string(contents), "_")
+	lines := strings.Split(string(contents), "\n")
+	if len(lines) < 2 {
+		return Role{}, fmt.Errorf("invalid last used role")
+	}
+	sessionName := lines[0]
+	parts := strings.Split(lines[1], "_")
 	if len(parts) < 3 {
 		return Role{}, fmt.Errorf("invalid last used role")
 	}
@@ -111,9 +116,10 @@ func GetLastUsedRole() (Role, error) {
 	accountId := parts[1]
 	roleName := strings.Join(parts[2:], "_")
 	role := Role{
-		Region:    region,
-		AccountId: accountId,
-		Name:      roleName,
+		Region:      region,
+		AccountId:   accountId,
+		Name:        roleName,
+		SessionName: sessionName,
 	}
 	creds, err := findRoleCredentials(role)
 	if err != nil {
@@ -129,37 +135,38 @@ func GetSavedRolesWithCredentials() (Roles, error) {
 	if err != nil {
 		return roles, err
 	}
-	cacheDir := filepath.Join(homedir, RoleCredentialsCachePath)
-	files, err := os.ReadDir(cacheDir)
+	pattern := filepath.Join(homedir, RoleCredentialsCachePath, "*", "*.json")
+	files, err := filepath.Glob(pattern)
 	if err != nil {
 		return roles, err
 	}
-	for _, file := range files {
-		filename := file.Name()
-		if !file.IsDir() && filepath.Ext(filename) == ".json" {
-			contents, err := os.ReadFile(filepath.Join(cacheDir, filename))
-			parts := strings.Split(filename, "_")
-			if len(parts) < 3 {
-				continue
-			}
-			region := parts[0]
-			accountId := parts[1]
-			roleName := strings.TrimSuffix(strings.Join(parts[2:], "_"), ".json")
-			if err != nil {
-				return nil, err
-			}
-			cred := RoleCredentials{}
-			if err := json.Unmarshal(contents, &cred); err != nil {
-				return nil, err
-			}
-			role := Role{
-				Region:      region,
-				AccountId:   accountId,
-				Name:        roleName,
-				Credentials: &cred,
-			}
-			roles = append(roles, role)
+	for _, foundPath := range files {
+		fmt.Println(foundPath)
+		fileName := filepath.Base(foundPath)
+		sessionName := filepath.Base(filepath.Dir(foundPath))
+		contents, err := os.ReadFile(foundPath)
+		parts := strings.Split(fileName, "_")
+		if len(parts) < 3 {
+			continue
 		}
+		region := parts[0]
+		accountId := parts[1]
+		roleName := strings.TrimSuffix(strings.Join(parts[2:], "_"), ".json")
+		if err != nil {
+			return nil, err
+		}
+		cred := RoleCredentials{}
+		if err := json.Unmarshal(contents, &cred); err != nil {
+			return nil, err
+		}
+		role := Role{
+			Region:      region,
+			AccountId:   accountId,
+			Name:        roleName,
+			SessionName: sessionName,
+			Credentials: &cred,
+		}
+		roles = append(roles, role)
 	}
 	return roles, nil
 }

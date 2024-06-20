@@ -144,7 +144,7 @@ var selectCredentialsCmd = &cobra.Command{
 			if err != nil {
 				ExitWithError(16, "failed to get credentials", err)
 			}
-			err = role.Credentials.Save(role.CacheKey())
+			err = role.Credentials.Save(session.Name, role.CacheKey())
 			if err != nil {
 				ExitWithError(17, "failed to save credentials", err)
 			}

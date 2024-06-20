@@ -23,13 +23,13 @@ var credsSelectCmd = &cobra.Command{
 		p.WithMaxHeight(10)
 		p.WithEmptyMessage("No Role Credentials Found")
 		p.WithTitle("Pick Role Credentials")
-		p.WithHeaders("Region", "Account ID", "Role Name", "Expires In")
+		p.WithHeaders("SSO Session", "Region", "Account ID", "Role Name", "Expires In")
 		for _, role := range roles {
 			expires := "-"
 			if role.Credentials != nil && !role.Credentials.IsExpired() {
 				expires = fmt.Sprintf("%.f mins", role.Credentials.Expiration.Sub(now).Minutes())
 			}
-			p.AddOption(role, role.Region, role.AccountId, role.Name, expires)
+			p.AddOption(role, role.SessionName, role.Region, role.AccountId, role.Name, expires)
 		}
 		selection := p.Pick()
 		if selection == nil {

@@ -22,6 +22,7 @@ type Role struct {
 	Name        string
 	AccountId   string
 	Region      string
+	SessionName string
 	Credentials *RoleCredentials
 }
 
@@ -269,9 +270,10 @@ func (s *Session) GetRoles(accountId string) (Roles, error) {
 		for _, details := range page.RoleList {
 			roleName := aws.ToString(details.RoleName)
 			role := Role{
-				Name:      roleName,
-				AccountId: accountId,
-				Region:    s.Region,
+				Name:        roleName,
+				AccountId:   accountId,
+				Region:      s.Region,
+				SessionName: s.Name,
 			}
 			creds, err := findRoleCredentials(role)
 			if err != nil {
