@@ -141,7 +141,6 @@ func GetSavedRolesWithCredentials() (Roles, error) {
 		return roles, err
 	}
 	for _, foundPath := range files {
-		fmt.Println(foundPath)
 		fileName := filepath.Base(foundPath)
 		sessionName := filepath.Base(filepath.Dir(foundPath))
 		contents, err := os.ReadFile(foundPath)
