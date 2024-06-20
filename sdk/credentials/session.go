@@ -292,7 +292,11 @@ func (s *Session) RefreshRoleCredentials(role *Role) error {
 	}
 	options := sso.Options{Region: s.Region}
 	client := sso.New(options)
-	params := sso.GetRoleCredentialsInput{AccessToken: &s.ClientToken.AccessToken, AccountId: &role.AccountId, RoleName: &role.Name}
+	params := sso.GetRoleCredentialsInput{
+		AccessToken: &s.ClientToken.AccessToken,
+		AccountId: &role.AccountId,
+		RoleName: &role.Name,
+	}
 	resp, err := client.GetRoleCredentials(context.TODO(), &params)
 	if err != nil {
 		return err

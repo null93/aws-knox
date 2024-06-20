@@ -45,6 +45,12 @@ var credsSelectCmd = &cobra.Command{
 			if session == nil {
 				ExitWithError(3, "failed to find sso session " + selectedRole.SessionName, err)
 			}
+			if session.ClientToken == nil || session.ClientToken.IsExpired() {
+				err := ClientLogin(session)
+				if err != nil {
+					ExitWithError(4, "failed to authorize device login", err)
+				}
+			}
 			err = session.RefreshRoleCredentials(&selectedRole)
 			if err != nil {
 				ExitWithError(4, "failed to get credentials", err)
