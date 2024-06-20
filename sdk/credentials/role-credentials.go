@@ -2,7 +2,6 @@ package credentials
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -89,8 +88,12 @@ func (r *Role) MarkLastUsed() error {
 	if err := os.MkdirAll(filepath.Join(homedir, KnoxPath), 0700); err != nil {
 		return err
 	}
-	lastUsedPath := filepath.Join(homedir, KnoxPath, "last-used")
-	return ioutil.WriteFile(lastUsedPath, []byte(r.SessionName+"\n"+r.CacheKey()), 0600)
+	serialized, err := json.MarshalIndent(r, "", "    ")
+	if err != nil {
+		return err
+	}
+	lastUsedPath := filepath.Join(homedir, KnoxPath, "last-used.json")
+	return ioutil.WriteFile(lastUsedPath, serialized, 0600)
 }
 
 func GetLastUsedRole() (Role, error) {
@@ -98,28 +101,14 @@ func GetLastUsedRole() (Role, error) {
 	if err != nil {
 		return Role{}, err
 	}
-	lastUsedPath := filepath.Join(homedir, KnoxPath, "last-used")
+	lastUsedPath := filepath.Join(homedir, KnoxPath, "last-used.json")
 	contents, err := ioutil.ReadFile(lastUsedPath)
 	if err != nil {
 		return Role{}, err
 	}
-	lines := strings.Split(string(contents), "\n")
-	if len(lines) < 2 {
-		return Role{}, fmt.Errorf("invalid last used role")
-	}
-	sessionName := lines[0]
-	parts := strings.Split(lines[1], "_")
-	if len(parts) < 3 {
-		return Role{}, fmt.Errorf("invalid last used role")
-	}
-	region := parts[0]
-	accountId := parts[1]
-	roleName := strings.Join(parts[2:], "_")
-	role := Role{
-		Region:      region,
-		AccountId:   accountId,
-		Name:        roleName,
-		SessionName: sessionName,
+	role := Role{}
+	if err := json.Unmarshal(contents, &role); err != nil {
+		return Role{}, err
 	}
 	creds, err := findRoleCredentials(role)
 	if err != nil {

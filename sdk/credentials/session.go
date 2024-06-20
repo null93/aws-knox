@@ -19,11 +19,11 @@ import (
 type Roles []Role
 
 type Role struct {
-	Name        string
-	AccountId   string
-	Region      string
-	SessionName string
-	Credentials *RoleCredentials
+	Name        string 	`json:"name"`
+	AccountId   string  `json:"accountId"`
+	Region      string  `json:"region"`
+	SessionName string  `json:"sessionName"`
+	Credentials *RoleCredentials `json:"-"`
 }
 
 func (r *Role) CacheKey() string {
