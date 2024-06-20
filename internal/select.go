@@ -63,24 +63,25 @@ var selectCredentialsCmd = &cobra.Command{
 			if err != nil {
 				ExitWithError(6, "failed to start device authorization", err)
 			}
-			ansi.AlternativeBuffer()
 			yellow := color.ToForeground(YellowColor).Decorator()
 			gray := color.ToForeground(LightGrayColor).Decorator()
 			title := TitleStyle.Decorator()
-			fmt.Println("")
-			fmt.Printf("%s %s\n", title("SSO Session:      "), gray(session.Name))
-			fmt.Printf("%s %s\n", title("SSO Start URL:    "), gray(session.StartUrl))
-			fmt.Printf("%s %s\n", title("Authorization URL:"), gray(url))
-			fmt.Printf("%s %s\n", title("Device Code:      "), yellow(userCode))
-			fmt.Println("")
-			fmt.Printf("Waiting for authorization to complete...")
+			DefaultStyle.Printfln("")
+			DefaultStyle.Printfln("%s %s", title("SSO Session:      "), gray(session.Name))
+			DefaultStyle.Printfln("%s %s", title("SSO Start URL:    "), gray(session.StartUrl))
+			DefaultStyle.Printfln("%s %s", title("Authorization URL:"), gray(url))
+			DefaultStyle.Printfln("%s %s", title("Device Code:      "), yellow(userCode))
+			DefaultStyle.Printfln("")
+			DefaultStyle.Printf("Waiting for authorization to complete...")
 			err = browser.OpenURL(urlFull)
 			if err != nil {
-				ansi.NormalBuffer()
+				ansi.MoveCursorUp(6)
+				ansi.ClearDown()
 				ExitWithError(7, "failed to open url in browser", err)
 			}
 			err = session.WaitForToken(deviceCode)
-			ansi.NormalBuffer()
+			ansi.MoveCursorUp(6)
+			ansi.ClearDown()
 			if err != nil {
 				ExitWithError(8, "failed to wait for token", err)
 			}

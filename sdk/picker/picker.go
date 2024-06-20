@@ -163,7 +163,11 @@ func (p *picker) render() {
 			color.ResetStyle,
 	)
 	DefaultStyle.Printfln("")
-	ansi.MoveCursorUp(7 + len(p.filtered))
+	lines := len(p.filtered)
+	if p.maxHeight < lines {
+		lines = p.maxHeight
+	}
+	ansi.MoveCursorUp(7 + lines)
 }
 
 func (p *picker) Pick() *option {

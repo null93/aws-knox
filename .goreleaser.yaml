@@ -1,8 +1,11 @@
 # Documentation can be found here: https://goreleaser.com
 
+version: 2
+
 before:
   hooks:
     - go mod tidy
+
 builds:
   - main: ./cmd/aws-knox/main.go
     binary: knox
@@ -18,6 +21,7 @@ builds:
       - -trimpath
     ldflags:
       - "-s -w -X github.com/null93/aws-knox/internal.Version={{ .Version }}"
+
 checksum:
   name_template: 'checksums.txt'
 
@@ -50,7 +54,7 @@ brews:
   - repository:
       owner: null93
       name: homebrew-tap
-    folder: Formula
+    directory: Formula
     goarm: "7"
     homepage: https://github.com/null93/aws-knox
     description: AWS credential process helper
