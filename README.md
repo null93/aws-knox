@@ -100,7 +100,7 @@ Knox is a powerful utility designed to simplify and streamline the process of ma
 
 Recommended configuration for `~/.aws/config`, feel free to swap out the commands to suit your needs:
 
-```
+```ini
 [default]
 region = us-east-1
 output = json
@@ -136,7 +136,7 @@ sso_start_url = https://d-0000000000.awsapps.com/start
 
 Here is another use-case where this tool can come in handy. If you use SSM Session Manager to SSH into your EC2 instances, you can use knox to switch between different AWS profiles and start an interactive session with a specific instance. Here is an example of how you can achieve this:
 
-```
+```shell
 function ssh-aws () {
     if [[ $# -ne 1 ]]; then
         echo "Usage: ssh-aws <instance-id>"
@@ -149,5 +149,5 @@ function ssh-aws () {
 Now you can SSH into an EC2 instance using the following command:
 
 ```
-ssh-aws i-00000000000000000
+$ ssh-aws i-00000000000000000
 ```
