@@ -1,7 +1,9 @@
 # Knox
 > AWS credential process helper
 
-
+<p align="center" >
+  <img src="./docs/images/screenshot-1.png" alt="screenshot" width="75%" />
+</p>
 
 ## About
 
