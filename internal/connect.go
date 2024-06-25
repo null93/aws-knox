@@ -24,7 +24,7 @@ var (
 
 var connectCmd = &cobra.Command{
 	Use:   "connect",
-	Short: "Connect to a specific EC2 instance using SSM",
+	Short: "Connect to a specific EC2 instance using AWS session-manager-plugin",
 	Args:  cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
 		now := time.Now()

@@ -16,7 +16,7 @@ var (
 
 var cleanCmd = &cobra.Command{
 	Use:       "clean [" + strings.Join(allowedCleanArgs, "] [") + "]",
-	Short:     "Delete expired role credentials from cache",
+	Short:     "Delete expired role/sso credentials from cache, optionally delete all credentials",
 	Args:      cobra.RangeArgs(1, 2),
 	ValidArgs: allowedCleanArgs,
 	Example:   "  knox clean creds\n  knox clean sso -a\n  knox clean creds sso",
