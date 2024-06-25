@@ -19,7 +19,7 @@ var (
 	connectAccountId   string
 	connectRoleName    string
 	connectInstanceId  string
-	connectUid         uint32 = 9001
+	connectUid         uint32 = 0
 )
 
 var connectCmd = &cobra.Command{
