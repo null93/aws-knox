@@ -23,7 +23,7 @@ var credsLastUsedCmd = &cobra.Command{
 			}
 			session := sessions.FindByName(role.SessionName)
 			if session == nil {
-				ExitWithError(3, "failed to find sso session " + role.SessionName, err)
+				ExitWithError(3, "failed to find sso session "+role.SessionName, err)
 			}
 			if session.ClientToken == nil || session.ClientToken.IsExpired() {
 				err := ClientLogin(session)

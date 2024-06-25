@@ -5,11 +5,11 @@ import (
 	"os"
 	"syscall"
 
-	. "github.com/null93/aws-knox/sdk/style"
-	"github.com/null93/aws-knox/sdk/credentials"
-	"github.com/pkg/browser"
 	"github.com/null93/aws-knox/pkg/ansi"
 	"github.com/null93/aws-knox/pkg/color"
+	"github.com/null93/aws-knox/sdk/credentials"
+	. "github.com/null93/aws-knox/sdk/style"
+	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
 )
 

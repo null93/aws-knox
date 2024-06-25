@@ -11,18 +11,50 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+	awscredentials "github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	"github.com/aws/aws-sdk-go-v2/service/sso"
 	"github.com/aws/aws-sdk-go-v2/service/ssooidc"
 	"gopkg.in/ini.v1"
 )
 
+type Instances []Instance
+
+type Instance struct {
+	Id               string
+	Name             string
+	InstanceType     string
+	PrivateIpAddress string
+	PublicIpAddress  string
+}
+
+func (r *Role) StartSession(instanceId string, defaultUid uint32) (*ssm.StartSessionOutput, error) {
+	staticProvider := awscredentials.NewStaticCredentialsProvider(
+		r.Credentials.AccessKeyId,
+		r.Credentials.SecretAccessKey,
+		r.Credentials.SessionToken,
+	)
+	options := ssm.Options{Region: "us-east-1", Credentials: staticProvider}
+	client := ssm.New(options)
+	input := ssm.StartSessionInput{
+		Target:       &instanceId,
+		DocumentName: aws.String("AWS-StartInteractiveCommand"),
+		Parameters: map[string][]string{
+			"command": {fmt.Sprintf("sudo su - `id -un %d`", defaultUid)},
+		},
+	}
+	return client.StartSession(context.TODO(), &input)
+}
+
 type Roles []Role
 
 type Role struct {
-	Name        string 	`json:"name"`
-	AccountId   string  `json:"accountId"`
-	Region      string  `json:"region"`
-	SessionName string  `json:"sessionName"`
+	Name        string           `json:"name"`
+	AccountId   string           `json:"accountId"`
+	Region      string           `json:"region"`
+	SessionName string           `json:"sessionName"`
 	Credentials *RoleCredentials `json:"-"`
 }
 
@@ -37,6 +69,62 @@ func (r Roles) FindByName(name string) *Role {
 		}
 	}
 	return nil
+}
+
+func (r *Role) GetManagedInstances() (Instances, error) {
+	instances := Instances{}
+	if r.Credentials == nil {
+		return instances, fmt.Errorf("role credentials are nil")
+	}
+	staticProvider := awscredentials.NewStaticCredentialsProvider(
+		r.Credentials.AccessKeyId,
+		r.Credentials.SecretAccessKey,
+		r.Credentials.SessionToken,
+	)
+	options := ec2.Options{Region: r.Region, Credentials: staticProvider}
+	client := ec2.New(options)
+	params := ec2.DescribeInstancesInput{
+		Filters: []ec2types.Filter{
+			{
+				Name:   aws.String("instance-state-name"),
+				Values: []string{"running"},
+			},
+		},
+	}
+	paginator := ec2.NewDescribeInstancesPaginator(client, &params)
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(context.TODO())
+		if err != nil {
+			return instances, err
+		}
+		for _, info := range page.Reservations {
+			for _, instance := range info.Instances {
+				name := "-"
+				privateId := "-"
+				publicId := "-"
+				if instance.PrivateIpAddress != nil {
+					privateId = aws.ToString(instance.PrivateIpAddress)
+				}
+				if instance.PublicIpAddress != nil {
+					publicId = aws.ToString(instance.PublicIpAddress)
+				}
+				for _, tag := range instance.Tags {
+					if aws.ToString(tag.Key) == "Name" {
+						name = aws.ToString(tag.Value)
+					}
+				}
+				instance := Instance{
+					Id:               aws.ToString(instance.InstanceId),
+					Name:             name,
+					InstanceType:     string(instance.InstanceType),
+					PrivateIpAddress: privateId,
+					PublicIpAddress:  publicId,
+				}
+				instances = append(instances, instance)
+			}
+		}
+	}
+	return instances, nil
 }
 
 type Accounts []Account
@@ -294,8 +382,8 @@ func (s *Session) RefreshRoleCredentials(role *Role) error {
 	client := sso.New(options)
 	params := sso.GetRoleCredentialsInput{
 		AccessToken: &s.ClientToken.AccessToken,
-		AccountId: &role.AccountId,
-		RoleName: &role.Name,
+		AccountId:   &role.AccountId,
+		RoleName:    &role.Name,
 	}
 	resp, err := client.GetRoleCredentials(context.TODO(), &params)
 	if err != nil {
