@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os/exec"
 	"time"
+	"syscall"
+	"os"
 
 	"github.com/null93/aws-knox/sdk/credentials"
 	"github.com/null93/aws-knox/sdk/picker"
@@ -165,13 +167,15 @@ var connectCmd = &cobra.Command{
 			fmt.Sprintf(`{"Target": "%s"}`, connectInstanceId),
 			fmt.Sprintf("https://ssm.%s.amazonaws.com", role.Region),
 		)
-		command.Stdin = cmd.InOrStdin()
-		command.Stdout = cmd.OutOrStdout()
-		command.Stderr = cmd.ErrOrStderr()
+		command.Stdin = os.Stdin
+		command.Stdout = os.Stdout
+		command.Stderr = os.Stderr
+		command.SysProcAttr = &syscall.SysProcAttr{ Setpgid: true, Foreground: true }
 		err = command.Run()
 		if err != nil {
 			ExitWithError(20, "failed to run session-manager-plugin", err)
 		}
+		fmt.Println ("EXITED")
 	},
 }
 
