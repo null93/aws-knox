@@ -7,7 +7,9 @@
 
 ## About
 
-Knox is a powerful utility designed to simplify and streamline the process of managing AWS credentials. Whether you're frequently switching between different AWS profiles or managing credentials issuance in an SSO environment, Knox provides a straightforward CLI tool to handle these tasks effortlessly. Commands like `knox select`, `knox creds select`, `knox creds last-used`, and `knox clean` make it easy to navigate and manipulate your AWS credential configurations. Its configurable nature, showcased in the `~/.aws/config` setup recommendations, ensures seamless integration into your AWS workflows. Whether you're in development, staging, or production, Knox helps maintain efficient and secure AWS credential management.
+Knox is a powerful utility designed to simplify and streamline the process of managing AWS credentials. Whether you're frequently switching between different AWS profiles or managing credentials issuance in an SSO environment, Knox provides a straightforward CLI tool to handle these tasks effortlessly. Commands like `knox select`, `knox last-used`, and `knox clean` make it easy to navigate and manipulate your AWS credential configurations. Its configurable nature, showcased in the `~/.aws/config` setup recommendations, ensures seamless integration into your AWS workflows. Whether you're in development, staging, or production, Knox helps maintain efficient and secure AWS credential management.
+
+Additionally the `knox connect` command provides a simple way to start an SSM session with an EC2 instance. This feature is particularly useful for users who frequently SSH into EC2 instances using SSM Session Manager. Knox allows you to switch between different AWS profiles and start an interactive session with a specific instance using a single command.
 
 ## Install
 
