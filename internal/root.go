@@ -14,14 +14,14 @@ import (
 )
 
 var (
-	Version     string = "0.0.0"
-	debug       bool   = false
-	view        string = "session"
-	connectUid  uint32 = 0
-	sessionName string
-	accountId   string
-	roleName    string
-	instanceId  string
+	Version           string = "0.0.0"
+	debug             bool   = false
+	selectCachedFirst bool   = false
+	connectUid        uint32 = 0
+	sessionName       string
+	accountId         string
+	roleName          string
+	instanceId        string
 )
 
 var RootCmd = &cobra.Command{
@@ -31,11 +31,7 @@ var RootCmd = &cobra.Command{
 }
 
 func toggleView() {
-	if view == "session" {
-		view = "cached"
-	} else {
-		view = "session"
-	}
+	selectCachedFirst = !selectCachedFirst
 }
 
 func goBack() {
@@ -134,7 +130,7 @@ func SelectRoleCredentialsStartingFromCache() (string, *credentials.Role) {
 		return action, nil
 	}
 	if err != nil {
-		return "toggle-view", nil
+		ExitWithError(1, "failed to pick a role", err)
 	}
 	if role.Credentials == nil || role.Credentials.IsExpired() {
 		if sessions, err = credentials.GetSessions(); err != nil {
@@ -161,7 +157,7 @@ func SelectRoleCredentialsStartingFromCache() (string, *credentials.Role) {
 	return "", role
 }
 
-func setupConfigFile () {
+func setupConfigFile() {
 	if homeDir, err := os.UserHomeDir(); err == nil {
 		os.MkdirAll(homeDir+"/.aws/knox", os.FileMode(0700))
 	}
@@ -170,12 +166,12 @@ func setupConfigFile () {
 	viper.SetConfigPermissions(os.FileMode(0600))
 	viper.AddConfigPath("$HOME/.aws/knox")
 	viper.SetDefault("default_connect_uid", uint32(0))
-	viper.SetDefault("default_view", "session")
+	viper.SetDefault("select_cached_first", false)
 	viper.SetDefault("max_items_to_show", 10)
 	viper.SafeWriteConfig()
 	viper.ReadInConfig()
 	tui.MaxItemsToShow = viper.GetInt("max_items_to_show")
-	view = viper.GetString("default_view")
+	selectCachedFirst = viper.GetBool("select_cached_first")
 	connectUid = viper.GetUint32("default_connect_uid")
 }
 

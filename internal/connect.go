@@ -19,19 +19,13 @@ var connectCmd = &cobra.Command{
 	Use:   "connect",
 	Short: "Connect to an EC2 instance using session-manager-plugin",
 	Args:  cobra.ExactArgs(0),
-	PreRunE: func(cmd *cobra.Command, args []string) error {
-		if view != "session" && view != "cached" {
-			return fmt.Errorf("view must be either 'session' or 'cached'")
-		}
-		return nil
-	},
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
 		var role *credentials.Role
 		var action string
 		var binaryPath string
 		for {
-			if view == "session" {
+			if !selectCachedFirst {
 				action, role = SelectRoleCredentialsStartingFromSession()
 			} else {
 				action, role = SelectRoleCredentialsStartingFromCache()
@@ -87,6 +81,6 @@ func init() {
 	connectCmd.Flags().StringVarP(&accountId, "account-id", "a", accountId, "AWS account ID")
 	connectCmd.Flags().StringVarP(&roleName, "role-name", "r", roleName, "AWS role name")
 	connectCmd.Flags().StringVarP(&instanceId, "instance-id", "i", instanceId, "EC2 instance ID")
-	connectCmd.Flags().StringVarP(&view, "view", "v", view, "session or cached")
+	connectCmd.Flags().BoolVarP(&selectCachedFirst, "cached", "c", selectCachedFirst, "select from cached credentials")
 	connectCmd.Flags().Uint32VarP(&connectUid, "uid", "u", connectUid, "UID on instance to 'su' to")
 }
