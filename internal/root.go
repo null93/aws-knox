@@ -10,6 +10,7 @@ import (
 	"github.com/null93/aws-knox/sdk/credentials"
 	"github.com/null93/aws-knox/sdk/tui"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -157,11 +158,31 @@ func SelectRoleCredentialsStartingFromCache() (string, credentials.Sessions, *cr
 	return "", sessions, session, role
 }
 
+func setupConfigFile () {
+	if homeDir, err := os.UserHomeDir(); err == nil {
+		os.MkdirAll(homeDir+"/.aws/knox", os.FileMode(0700))
+	}
+	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
+	viper.SetConfigPermissions(os.FileMode(0600))
+	viper.AddConfigPath("$HOME/.aws/knox")
+	viper.SetDefault("default_connect_uid", uint32(0))
+	viper.SetDefault("default_view", "session")
+	viper.SetDefault("max_items_to_show", 10)
+	viper.SafeWriteConfig()
+	viper.ReadInConfig()
+	tui.MaxItemsToShow = viper.GetInt("max_items_to_show")
+	view = viper.GetString("default_view")
+	connectUid = viper.GetUint32("default_connect_uid")
+}
+
 func init() {
 	RootCmd.Flags().SortFlags = true
 	RootCmd.Root().CompletionOptions.DisableDefaultCmd = true
 	RootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
 	RootCmd.PersistentFlags().BoolVarP(&debug, "debug", "d", debug, "Debug mode")
+
+	setupConfigFile()
 
 	if tty, err := os.OpenFile("/dev/tty", syscall.O_WRONLY, 0); err == nil {
 		ansi.Writer = tty

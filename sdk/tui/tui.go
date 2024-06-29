@@ -13,6 +13,10 @@ import (
 	"github.com/pkg/browser"
 )
 
+var (
+	MaxItemsToShow int = 10
+)
+
 func ClientLogin(session *credentials.Session) error {
 	if err := session.RegisterClient(); err != nil {
 		return err
@@ -53,7 +57,7 @@ func ClientLogin(session *credentials.Session) error {
 func SelectSession(sessions credentials.Sessions) (string, string, error) {
 	now := time.Now()
 	p := picker.NewPicker()
-	p.WithMaxHeight(10)
+	p.WithMaxHeight(MaxItemsToShow)
 	p.WithEmptyMessage("No SSO Sessions Found")
 	p.WithTitle("Pick SSO Session")
 	p.WithHeaders("SSO Session", "Region", "SSO Start URL", "Expires In")
@@ -81,7 +85,7 @@ func SelectAccount(session *credentials.Session) (string, string, error) {
 		return "", "", err
 	}
 	p := picker.NewPicker()
-	p.WithMaxHeight(5)
+	p.WithMaxHeight(MaxItemsToShow)
 	p.WithEmptyMessage("No Accounts Found")
 	p.WithTitle("Pick Account")
 	p.WithHeaders("Account ID", "Name", "Email")
@@ -102,7 +106,7 @@ func SelectAccount(session *credentials.Session) (string, string, error) {
 func SelectRole(roles credentials.Roles) (string, string, error) {
 	now := time.Now()
 	p := picker.NewPicker()
-	p.WithMaxHeight(5)
+	p.WithMaxHeight(MaxItemsToShow)
 	p.WithEmptyMessage("No Roles Found")
 	p.WithTitle("Pick Role")
 	p.WithHeaders("Role Name", "Expires In")
@@ -130,7 +134,7 @@ func SelectInstance(role *credentials.Role) (string, string, error) {
 		return "", "", err
 	}
 	p := picker.NewPicker()
-	p.WithMaxHeight(10)
+	p.WithMaxHeight(MaxItemsToShow)
 	p.WithEmptyMessage("No Instances Found")
 	p.WithTitle("Pick EC2 Instance")
 	p.WithHeaders("Instance ID", "Instance Type", "Private IP", "Public IP", "Name")
@@ -155,7 +159,7 @@ func SelectRolesCredentials() (*credentials.Role, string, error) {
 		return nil, "", err
 	}
 	p := picker.NewPicker()
-	p.WithMaxHeight(10)
+	p.WithMaxHeight(MaxItemsToShow)
 	p.WithEmptyMessage("No Role Credentials Found")
 	p.WithTitle("Pick Role Credentials")
 	p.WithHeaders("SSO Session", "Region", "Account ID", "Role Name", "Expires In")
