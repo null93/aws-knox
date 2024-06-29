@@ -29,6 +29,32 @@ var RootCmd = &cobra.Command{
 	Short:   "knox helps you manage AWS role credentials and connect to EC2 instances",
 }
 
+func toggleView() {
+	if view == "session" {
+		view = "cached"
+	} else {
+		view = "session"
+	}
+}
+
+func goBack() {
+	if instanceId != "" {
+		instanceId = ""
+		return
+	}
+	if roleName != "" {
+		roleName = ""
+		return
+	}
+	if accountId != "" {
+		accountId = ""
+		return
+	}
+	if sessionName != "" {
+		sessionName = ""
+	}
+}
+
 func ExitWithError(code int, message string, err error) {
 	fmt.Printf("Error: %s\n", message)
 	if err != nil && debug {
@@ -37,8 +63,9 @@ func ExitWithError(code int, message string, err error) {
 	os.Exit(code)
 }
 
-func SelectRoleCredentialsStartingFromSession() (credentials.Sessions, *credentials.Session, credentials.Roles, *credentials.Role) {
+func SelectRoleCredentialsStartingFromSession() (string, credentials.Sessions, *credentials.Session, credentials.Roles, *credentials.Role) {
 	var err error
+	var action string
 	var sessions credentials.Sessions
 	var session *credentials.Session
 	var roles credentials.Roles
@@ -47,8 +74,10 @@ func SelectRoleCredentialsStartingFromSession() (credentials.Sessions, *credenti
 		ExitWithError(1, "failed to get configured sessions", err)
 	}
 	if sessionName == "" {
-		if sessionName, err = tui.SelectSession(sessions); err != nil {
+		if sessionName, action, err = tui.SelectSession(sessions); err != nil {
 			ExitWithError(2, "failed to pick an sso session", err)
+		} else if action != "" {
+			return action, nil, nil, nil, nil
 		}
 	}
 	if session = sessions.FindByName(sessionName); session == nil {
@@ -60,16 +89,20 @@ func SelectRoleCredentialsStartingFromSession() (credentials.Sessions, *credenti
 		}
 	}
 	if accountId == "" {
-		if accountId, err = tui.SelectAccount(session); err != nil {
+		if accountId, action, err = tui.SelectAccount(session); err != nil {
 			ExitWithError(5, "failed to pick an account id", err)
+		} else if action != "" {
+			return action, nil, nil, nil, nil
 		}
 	}
 	if roles, err = session.GetRoles(accountId); err != nil {
 		ExitWithError(6, "failed to get roles", err)
 	}
 	if roleName == "" {
-		if roleName, err = tui.SelectRole(roles); err != nil {
+		if roleName, action, err = tui.SelectRole(roles); err != nil {
 			ExitWithError(7, "failed to pick a role", err)
+		} else if action != "" {
+			return action, nil, nil, nil, nil
 		}
 	}
 	if role = roles.FindByName(roleName); role == nil {
@@ -86,15 +119,19 @@ func SelectRoleCredentialsStartingFromSession() (credentials.Sessions, *credenti
 	if err := role.MarkLastUsed(); err != nil {
 		ExitWithError(11, "failed to mark last used role", err)
 	}
-	return sessions, session, roles, role
+	return "", sessions, session, roles, role
 }
 
-func SelectRoleCredentialsStartingFromCache() (credentials.Sessions, *credentials.Session, *credentials.Role) {
+func SelectRoleCredentialsStartingFromCache() (string, credentials.Sessions, *credentials.Session, *credentials.Role) {
 	var err error
+	var action string
 	var sessions credentials.Sessions
 	var session *credentials.Session
 	var role *credentials.Role
-	role, err = tui.SelectRolesCredentials()
+	role, action, err = tui.SelectRolesCredentials()
+	if action != "" {
+		return action, nil, nil, nil
+	}
 	if role.Credentials == nil || role.Credentials.IsExpired() {
 		if sessions, err = credentials.GetSessions(); err != nil {
 			ExitWithError(1, "failed to parse sso sessions", err)
@@ -117,7 +154,7 @@ func SelectRoleCredentialsStartingFromCache() (credentials.Sessions, *credential
 	if err = role.MarkLastUsed(); err != nil {
 		ExitWithError(11, "failed to mark last used role", err)
 	}
-	return sessions, session, role
+	return "", sessions, session, role
 }
 
 func init() {

@@ -19,15 +19,27 @@ var selectCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		var role *credentials.Role
-		if view == "session" {
-			_, _, _, role = SelectRoleCredentialsStartingFromSession()
-		} else {
-			_, _, role = SelectRoleCredentialsStartingFromCache()
-		}
-		if json, err := role.Credentials.ToJSON(); err != nil {
-			ExitWithError(12, "failed to convert credentials to json", err)
-		} else {
-			fmt.Println(json)
+		var action string
+		for {
+			if view == "session" {
+				action, _, _, _, role = SelectRoleCredentialsStartingFromSession()
+			} else {
+				action, _, _, role = SelectRoleCredentialsStartingFromCache()
+			}
+			if action == "toggle-view" {
+				toggleView()
+				continue
+			}
+			if action == "back" {
+				goBack()
+				continue
+			}
+			if json, err := role.Credentials.ToJSON(); err != nil {
+				ExitWithError(12, "failed to convert credentials to json", err)
+			} else {
+				fmt.Println(json)
+				break
+			}
 		}
 	},
 }

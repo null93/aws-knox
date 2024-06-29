@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"atomicgo.dev/keyboard/keys"
 	"github.com/null93/aws-knox/pkg/ansi"
 	"github.com/null93/aws-knox/pkg/color"
 	"github.com/null93/aws-knox/sdk/credentials"
@@ -49,13 +50,14 @@ func ClientLogin(session *credentials.Session) error {
 	return nil
 }
 
-func SelectSession(sessions credentials.Sessions) (string, error) {
+func SelectSession(sessions credentials.Sessions) (string, string, error) {
 	now := time.Now()
 	p := picker.NewPicker()
 	p.WithMaxHeight(10)
 	p.WithEmptyMessage("No SSO Sessions Found")
 	p.WithTitle("Pick SSO Session")
 	p.WithHeaders("SSO Session", "Region", "SSO Start URL", "Expires In")
+	p.AddAction(keys.Tab, "tab", "view cached")
 	for _, session := range sessions {
 		expires := "-"
 		if session.ClientToken != nil && !session.ClientToken.IsExpired() {
@@ -63,40 +65,48 @@ func SelectSession(sessions credentials.Sessions) (string, error) {
 		}
 		p.AddOption(session.Name, session.Name, session.Region, session.StartUrl, expires)
 	}
-	selection := p.Pick()
-	if selection == nil {
-		return "", fmt.Errorf("no sso session picked")
+	selection, firedKeyCode := p.Pick()
+	if firedKeyCode != nil && *firedKeyCode == keys.Tab {
+		return "", "toggle-view", nil
 	}
-	return selection.Value.(string), nil
+	if selection == nil {
+		return "", "", fmt.Errorf("no sso session picked")
+	}
+	return selection.Value.(string), "", nil
 }
 
-func SelectAccount(session *credentials.Session) (string, error) {
+func SelectAccount(session *credentials.Session) (string, string, error) {
 	accountIds, err := session.GetAccounts()
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	p := picker.NewPicker()
 	p.WithMaxHeight(5)
 	p.WithEmptyMessage("No Accounts Found")
 	p.WithTitle("Pick Account")
 	p.WithHeaders("Account ID", "Name", "Email")
+	p.AddAction(keys.Esc, "esc", "go back")
 	for _, account := range accountIds {
 		p.AddOption(account.Id, account.Id, account.Name, account.Email)
 	}
-	selection := p.Pick()
-	if selection == nil {
-		return "", fmt.Errorf("no account picked")
+	selection, firedKeyCode := p.Pick()
+	if firedKeyCode != nil && *firedKeyCode == keys.Esc {
+		return "", "back", nil
 	}
-	return selection.Value.(string), nil
+	if selection == nil {
+		return "", "", fmt.Errorf("no account picked")
+	}
+	return selection.Value.(string), "", nil
 }
 
-func SelectRole(roles credentials.Roles) (string, error) {
+func SelectRole(roles credentials.Roles) (string, string, error) {
 	now := time.Now()
 	p := picker.NewPicker()
 	p.WithMaxHeight(5)
 	p.WithEmptyMessage("No Roles Found")
 	p.WithTitle("Pick Role")
 	p.WithHeaders("Role Name", "Expires In")
+	p.AddAction(keys.Esc, "esc", "go back")
 	for _, role := range roles {
 		expires := "-"
 		if role.Credentials != nil && !role.Credentials.IsExpired() {
@@ -104,44 +114,52 @@ func SelectRole(roles credentials.Roles) (string, error) {
 		}
 		p.AddOption(role.Name, role.Name, expires)
 	}
-	selection := p.Pick()
-	if selection == nil {
-		return "", fmt.Errorf("no role picked")
+	selection, firedKeyCode := p.Pick()
+	if firedKeyCode != nil && *firedKeyCode == keys.Esc {
+		return "", "back", nil
 	}
-	return selection.Value.(string), nil
+	if selection == nil {
+		return "", "", fmt.Errorf("no role picked")
+	}
+	return selection.Value.(string), "", nil
 }
 
-func SelectInstance(role *credentials.Role) (string, error) {
+func SelectInstance(role *credentials.Role) (string, string, error) {
 	instances, err := role.GetManagedInstances()
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	p := picker.NewPicker()
 	p.WithMaxHeight(10)
 	p.WithEmptyMessage("No Instances Found")
 	p.WithTitle("Pick EC2 Instance")
 	p.WithHeaders("Instance ID", "Instance Type", "Private IP", "Public IP", "Name")
+	p.AddAction(keys.Esc, "esc", "go back")
 	for _, instance := range instances {
 		p.AddOption(instance.Id, instance.Id, instance.InstanceType, instance.PrivateIpAddress, instance.PublicIpAddress, instance.Name)
 	}
-	selection := p.Pick()
-	if selection == nil {
-		return "", fmt.Errorf("no instance picked")
+	selection, firedKeyCode := p.Pick()
+	if firedKeyCode != nil && *firedKeyCode == keys.Esc {
+		return "", "back", nil
 	}
-	return selection.Value.(string), nil
+	if selection == nil {
+		return "", "", fmt.Errorf("no instance picked")
+	}
+	return selection.Value.(string), "", nil
 }
 
-func SelectRolesCredentials() (*credentials.Role, error) {
+func SelectRolesCredentials() (*credentials.Role, string, error) {
 	now := time.Now()
 	roles, err := credentials.GetSavedRolesWithCredentials()
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	p := picker.NewPicker()
 	p.WithMaxHeight(10)
 	p.WithEmptyMessage("No Role Credentials Found")
 	p.WithTitle("Pick Role Credentials")
 	p.WithHeaders("SSO Session", "Region", "Account ID", "Role Name", "Expires In")
+	p.AddAction(keys.Tab, "tab", "pick session")
 	for _, role := range roles {
 		expires := "-"
 		if role.Credentials != nil && !role.Credentials.IsExpired() {
@@ -149,10 +167,13 @@ func SelectRolesCredentials() (*credentials.Role, error) {
 		}
 		p.AddOption(role, role.SessionName, role.Region, role.AccountId, role.Name, expires)
 	}
-	selection := p.Pick()
+	selection, firedKeyCode := p.Pick()
+	if firedKeyCode != nil && *firedKeyCode == keys.Tab {
+		return nil, "toggle-view", nil
+	}
 	if selection == nil {
-		return nil, fmt.Errorf("no role credentials picked")
+		return nil, "", fmt.Errorf("no role credentials picked")
 	}
 	selected := selection.Value.(credentials.Role)
-	return &selected, nil
+	return &selected, "", nil
 }

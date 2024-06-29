@@ -19,42 +19,63 @@ var connectCmd = &cobra.Command{
 	Use:   "connect",
 	Short: "Connect to an EC2 instance using session-manager-plugin",
 	Args:  cobra.ExactArgs(0),
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		if view != "session" && view != "cached" {
+			return fmt.Errorf("view must be either 'session' or 'cached'")
+		}
+		return nil
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
 		var role *credentials.Role
+		var action string
 		var binaryPath string
-		if view == "session" {
-			_, _, _, role = SelectRoleCredentialsStartingFromSession()
-		} else {
-			_, _, role = SelectRoleCredentialsStartingFromCache()
-		}
-		if instanceId == "" {
-			if instanceId, err = tui.SelectInstance(role); err != nil {
-				ExitWithError(12, "failed to pick an instance", err)
+		for {
+			if view == "session" {
+				action, _, _, _, role = SelectRoleCredentialsStartingFromSession()
+			} else {
+				action, _, _, role = SelectRoleCredentialsStartingFromCache()
 			}
-		}
-		details, err := role.StartSession(instanceId, connectUid)
-		if err != nil {
-			ExitWithError(13, "failed to start ssm session", err)
-		}
-		if binaryPath, err = exec.LookPath("session-manager-plugin"); err != nil {
-			ExitWithError(14, "failed to find session-manager-plugin, see "+SESSION_MANAGER_PLUGIN_URL, err)
-		}
-		command := exec.Command(
-			binaryPath,
-			fmt.Sprintf(`{"SessionId": "%s", "TokenValue": "%s", "StreamUrl": "%s"}`, *details.SessionId, *details.TokenValue, *details.StreamUrl),
-			role.Region,
-			"StartSession",
-			"", // No Profile
-			fmt.Sprintf(`{"Target": "%s"}`, instanceId),
-			fmt.Sprintf("https://ssm.%s.amazonaws.com", role.Region),
-		)
-		command.Stdin = os.Stdin
-		command.Stdout = os.Stdout
-		command.Stderr = os.Stderr
-		command.SysProcAttr = &syscall.SysProcAttr{Setpgid: true, Foreground: true}
-		if err = command.Run(); err != nil {
-			ExitWithError(15, "failed to run session-manager-plugin", err)
+			if action == "toggle-view" {
+				toggleView()
+				continue
+			}
+			if action == "back" {
+				goBack()
+				continue
+			}
+			if instanceId == "" {
+				if instanceId, action, err = tui.SelectInstance(role); err != nil {
+					ExitWithError(12, "failed to pick an instance", err)
+				} else if action == "back" {
+					goBack()
+					continue
+				}
+			}
+			details, err := role.StartSession(instanceId, connectUid)
+			if err != nil {
+				ExitWithError(13, "failed to start ssm session", err)
+			}
+			if binaryPath, err = exec.LookPath("session-manager-plugin"); err != nil {
+				ExitWithError(14, "failed to find session-manager-plugin, see "+SESSION_MANAGER_PLUGIN_URL, err)
+			}
+			command := exec.Command(
+				binaryPath,
+				fmt.Sprintf(`{"SessionId": "%s", "TokenValue": "%s", "StreamUrl": "%s"}`, *details.SessionId, *details.TokenValue, *details.StreamUrl),
+				role.Region,
+				"StartSession",
+				"", // No Profile
+				fmt.Sprintf(`{"Target": "%s"}`, instanceId),
+				fmt.Sprintf("https://ssm.%s.amazonaws.com", role.Region),
+			)
+			command.Stdin = os.Stdin
+			command.Stdout = os.Stdout
+			command.Stderr = os.Stderr
+			command.SysProcAttr = &syscall.SysProcAttr{Setpgid: true, Foreground: true}
+			if err = command.Run(); err != nil {
+				ExitWithError(15, "failed to run session-manager-plugin", err)
+			}
+			break
 		}
 	},
 }

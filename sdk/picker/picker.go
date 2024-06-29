@@ -11,6 +11,7 @@ import (
 )
 
 type picker struct {
+	actions       []action
 	options       []option
 	filtered      []*option
 	selectedIndex int
@@ -29,8 +30,15 @@ type option struct {
 	Value   interface{}
 }
 
+type action struct {
+	key         keys.KeyCode
+	name        string
+	description string
+}
+
 func NewPicker() *picker {
 	p := picker{
+		actions:       []action{},
 		options:       []option{},
 		filtered:      []*option{},
 		selectedIndex: 0,
@@ -89,6 +97,10 @@ func (p *picker) AddOption(value interface{}, cols ...string) {
 	p.selectedIndex = 0
 	p.options = append(p.options, o)
 	p.filtered = append(p.filtered, &o)
+}
+
+func (p *picker) AddAction(key keys.KeyCode, name string, description string) {
+	p.actions = append(p.actions, action{key, name, description})
 }
 
 func (p *picker) filter() {
@@ -154,14 +166,15 @@ func (p *picker) render() {
 	} else {
 		DefaultStyle.Printfln("")
 	}
-	DefaultStyle.Printf(
-		darkGray(" %d/%d items •", len(p.filtered), len(p.options)) +
-			lightGray(" ↑ ") + darkGray("up •") +
-			lightGray(" ↓ ") + darkGray("down •") +
-			lightGray(" enter ") + darkGray("choose •") +
-			lightGray(" esc ") + darkGray("quit") +
-			color.ResetStyle,
-	)
+	helpMenu := darkGray(" %d/%d items •", len(p.filtered), len(p.options))
+	helpMenu += lightGray(" ↑ ") + darkGray("up •")
+	helpMenu += lightGray(" ↓ ") + darkGray("down •")
+	helpMenu += lightGray(" enter ") + darkGray("choose •")
+	for _, action := range p.actions {
+		helpMenu += lightGray(" %s ", action.name) + darkGray("%s •", action.description)
+	}
+	helpMenu += lightGray(" ctl+c ") + darkGray("quit") + color.ResetStyle
+	DefaultStyle.Printf(helpMenu)
 	DefaultStyle.Printfln("")
 	lines := len(p.filtered)
 	if p.maxHeight < lines {
@@ -170,13 +183,20 @@ func (p *picker) render() {
 	ansi.MoveCursorUp(7 + lines)
 }
 
-func (p *picker) Pick() *option {
+func (p *picker) Pick() (*option, *keys.KeyCode) {
 	ansi.HideCursor()
 	defer ansi.ClearDown()
 	defer ansi.ShowCursor()
 	p.render()
+	var firedKeyCode keys.KeyCode
 	keyboard.Listen(func(key keys.Key) (stop bool, err error) {
-		if key.Code == keys.CtrlC || key.Code == keys.Escape {
+		for _, action := range p.actions {
+			if key.Code == action.key {
+				firedKeyCode = action.key
+				return true, nil
+			}
+		}
+		if key.Code == keys.CtrlC {
 			p.selectedIndex = -1
 			return true, nil
 		}
@@ -220,10 +240,10 @@ func (p *picker) Pick() *option {
 		return false, nil
 	})
 	if p.selectedIndex < 0 {
-		return nil
+		return nil, nil
 	}
 	if p.selectedIndex >= len(p.filtered) {
-		return nil
+		return nil, nil
 	}
-	return p.filtered[p.selectedIndex]
+	return p.filtered[p.selectedIndex], &firedKeyCode
 }
