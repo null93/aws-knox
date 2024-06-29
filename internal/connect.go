@@ -32,9 +32,9 @@ var connectCmd = &cobra.Command{
 		var binaryPath string
 		for {
 			if view == "session" {
-				action, _, _, _, role = SelectRoleCredentialsStartingFromSession()
+				action, role = SelectRoleCredentialsStartingFromSession()
 			} else {
-				action, _, _, role = SelectRoleCredentialsStartingFromCache()
+				action, role = SelectRoleCredentialsStartingFromCache()
 			}
 			if action == "toggle-view" {
 				toggleView()

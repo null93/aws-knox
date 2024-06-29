@@ -64,7 +64,7 @@ func ExitWithError(code int, message string, err error) {
 	os.Exit(code)
 }
 
-func SelectRoleCredentialsStartingFromSession() (string, credentials.Sessions, *credentials.Session, credentials.Roles, *credentials.Role) {
+func SelectRoleCredentialsStartingFromSession() (string, *credentials.Role) {
 	var err error
 	var action string
 	var sessions credentials.Sessions
@@ -78,7 +78,7 @@ func SelectRoleCredentialsStartingFromSession() (string, credentials.Sessions, *
 		if sessionName, action, err = tui.SelectSession(sessions); err != nil {
 			ExitWithError(2, "failed to pick an sso session", err)
 		} else if action != "" {
-			return action, nil, nil, nil, nil
+			return action, nil
 		}
 	}
 	if session = sessions.FindByName(sessionName); session == nil {
@@ -93,7 +93,7 @@ func SelectRoleCredentialsStartingFromSession() (string, credentials.Sessions, *
 		if accountId, action, err = tui.SelectAccount(session); err != nil {
 			ExitWithError(5, "failed to pick an account id", err)
 		} else if action != "" {
-			return action, nil, nil, nil, nil
+			return action, nil
 		}
 	}
 	if roles, err = session.GetRoles(accountId); err != nil {
@@ -103,7 +103,7 @@ func SelectRoleCredentialsStartingFromSession() (string, credentials.Sessions, *
 		if roleName, action, err = tui.SelectRole(roles); err != nil {
 			ExitWithError(7, "failed to pick a role", err)
 		} else if action != "" {
-			return action, nil, nil, nil, nil
+			return action, nil
 		}
 	}
 	if role = roles.FindByName(roleName); role == nil {
@@ -120,10 +120,10 @@ func SelectRoleCredentialsStartingFromSession() (string, credentials.Sessions, *
 	if err := role.MarkLastUsed(); err != nil {
 		ExitWithError(11, "failed to mark last used role", err)
 	}
-	return "", sessions, session, roles, role
+	return "", role
 }
 
-func SelectRoleCredentialsStartingFromCache() (string, credentials.Sessions, *credentials.Session, *credentials.Role) {
+func SelectRoleCredentialsStartingFromCache() (string, *credentials.Role) {
 	var err error
 	var action string
 	var sessions credentials.Sessions
@@ -131,7 +131,10 @@ func SelectRoleCredentialsStartingFromCache() (string, credentials.Sessions, *cr
 	var role *credentials.Role
 	role, action, err = tui.SelectRolesCredentials()
 	if action != "" {
-		return action, nil, nil, nil
+		return action, nil
+	}
+	if err != nil {
+		return "toggle-view", nil
 	}
 	if role.Credentials == nil || role.Credentials.IsExpired() {
 		if sessions, err = credentials.GetSessions(); err != nil {
@@ -155,7 +158,7 @@ func SelectRoleCredentialsStartingFromCache() (string, credentials.Sessions, *cr
 	if err = role.MarkLastUsed(); err != nil {
 		ExitWithError(11, "failed to mark last used role", err)
 	}
-	return "", sessions, session, role
+	return "", role
 }
 
 func setupConfigFile () {
