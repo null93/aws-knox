@@ -1,0 +1,158 @@
+package tui
+
+import (
+	"fmt"
+	"time"
+
+	"github.com/null93/aws-knox/pkg/ansi"
+	"github.com/null93/aws-knox/pkg/color"
+	"github.com/null93/aws-knox/sdk/credentials"
+	"github.com/null93/aws-knox/sdk/picker"
+	. "github.com/null93/aws-knox/sdk/style"
+	"github.com/pkg/browser"
+)
+
+func ClientLogin(session *credentials.Session) error {
+	if err := session.RegisterClient(); err != nil {
+		return err
+	}
+	userCode, deviceCode, url, urlFull, err := session.StartDeviceAuthorization()
+	if err != nil {
+		return err
+	}
+	yellow := color.ToForeground(YellowColor).Decorator()
+	gray := color.ToForeground(LightGrayColor).Decorator()
+	title := TitleStyle.Decorator()
+	DefaultStyle.Printfln("")
+	DefaultStyle.Printfln("%s %s", title("SSO Session:      "), gray(session.Name))
+	DefaultStyle.Printfln("%s %s", title("SSO Start URL:    "), gray(session.StartUrl))
+	DefaultStyle.Printfln("%s %s", title("Authorization URL:"), gray(url))
+	DefaultStyle.Printfln("%s %s", title("Device Code:      "), yellow(userCode))
+	DefaultStyle.Printfln("")
+	DefaultStyle.Printf("Waiting for authorization to complete...")
+	err = browser.OpenURL(urlFull)
+	if err != nil {
+		ansi.MoveCursorUp(6)
+		ansi.ClearDown()
+		return err
+	}
+	err = session.WaitForToken(deviceCode)
+	ansi.MoveCursorUp(6)
+	ansi.ClearDown()
+	if err != nil {
+		return err
+	}
+	err = session.Save()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func SelectSession(sessions credentials.Sessions) (string, error) {
+	now := time.Now()
+	p := picker.NewPicker()
+	p.WithMaxHeight(10)
+	p.WithEmptyMessage("No SSO Sessions Found")
+	p.WithTitle("Pick SSO Session")
+	p.WithHeaders("SSO Session", "Region", "SSO Start URL", "Expires In")
+	for _, session := range sessions {
+		expires := "-"
+		if session.ClientToken != nil && !session.ClientToken.IsExpired() {
+			expires = fmt.Sprintf("%.f mins", session.ClientToken.ExpiresAt.Sub(now).Minutes())
+		}
+		p.AddOption(session.Name, session.Name, session.Region, session.StartUrl, expires)
+	}
+	selection := p.Pick()
+	if selection == nil {
+		return "", fmt.Errorf("no sso session picked")
+	}
+	return selection.Value.(string), nil
+}
+
+func SelectAccount(session *credentials.Session) (string, error) {
+	accountIds, err := session.GetAccounts()
+	if err != nil {
+		return "", err
+	}
+	p := picker.NewPicker()
+	p.WithMaxHeight(5)
+	p.WithEmptyMessage("No Accounts Found")
+	p.WithTitle("Pick Account")
+	p.WithHeaders("Account ID", "Name", "Email")
+	for _, account := range accountIds {
+		p.AddOption(account.Id, account.Id, account.Name, account.Email)
+	}
+	selection := p.Pick()
+	if selection == nil {
+		return "", fmt.Errorf("no account picked")
+	}
+	return selection.Value.(string), nil
+}
+
+func SelectRole(roles credentials.Roles) (string, error) {
+	now := time.Now()
+	p := picker.NewPicker()
+	p.WithMaxHeight(5)
+	p.WithEmptyMessage("No Roles Found")
+	p.WithTitle("Pick Role")
+	p.WithHeaders("Role Name", "Expires In")
+	for _, role := range roles {
+		expires := "-"
+		if role.Credentials != nil && !role.Credentials.IsExpired() {
+			expires = fmt.Sprintf("%.f mins", role.Credentials.Expiration.Sub(now).Minutes())
+		}
+		p.AddOption(role.Name, role.Name, expires)
+	}
+	selection := p.Pick()
+	if selection == nil {
+		return "", fmt.Errorf("no role picked")
+	}
+	return selection.Value.(string), nil
+}
+
+func SelectInstance(role *credentials.Role) (string, error) {
+	instances, err := role.GetManagedInstances()
+	if err != nil {
+		return "", err
+	}
+	p := picker.NewPicker()
+	p.WithMaxHeight(10)
+	p.WithEmptyMessage("No Instances Found")
+	p.WithTitle("Pick EC2 Instance")
+	p.WithHeaders("Instance ID", "Instance Type", "Private IP", "Public IP", "Name")
+	for _, instance := range instances {
+		p.AddOption(instance.Id, instance.Id, instance.InstanceType, instance.PrivateIpAddress, instance.PublicIpAddress, instance.Name)
+	}
+	selection := p.Pick()
+	if selection == nil {
+		return "", fmt.Errorf("no instance picked")
+	}
+	return selection.Value.(string), nil
+}
+
+func SelectRolesCredentials() (*credentials.Role, error) {
+	now := time.Now()
+	roles, err := credentials.GetSavedRolesWithCredentials()
+	if err != nil {
+		return nil, err
+	}
+	p := picker.NewPicker()
+	p.WithMaxHeight(10)
+	p.WithEmptyMessage("No Role Credentials Found")
+	p.WithTitle("Pick Role Credentials")
+	p.WithHeaders("SSO Session", "Region", "Account ID", "Role Name", "Expires In")
+	for _, role := range roles {
+		expires := "-"
+		if role.Credentials != nil && !role.Credentials.IsExpired() {
+			expires = fmt.Sprintf("%.f mins", role.Credentials.Expiration.Sub(now).Minutes())
+		}
+		p.AddOption(role, role.SessionName, role.Region, role.AccountId, role.Name, expires)
+	}
+	selection := p.Pick()
+	if selection == nil {
+		return nil, fmt.Errorf("no role credentials picked")
+	}
+	selected := selection.Value.(credentials.Role)
+	return &selected, nil
+}

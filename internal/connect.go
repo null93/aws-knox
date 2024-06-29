@@ -2,13 +2,12 @@ package internal
 
 import (
 	"fmt"
-	"os/exec"
-	"time"
-	"syscall"
 	"os"
+	"os/exec"
+	"syscall"
 
 	"github.com/null93/aws-knox/sdk/credentials"
-	"github.com/null93/aws-knox/sdk/picker"
+	"github.com/null93/aws-knox/sdk/tui"
 	"github.com/spf13/cobra"
 )
 
@@ -29,134 +28,66 @@ var connectCmd = &cobra.Command{
 	Short: "Connect to a specific EC2 instance using AWS session-manager-plugin",
 	Args:  cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
-		now := time.Now()
-		sessions, err := credentials.GetSessions()
-		if err != nil {
+		var err error
+		var sessions credentials.Sessions
+		var session *credentials.Session
+		var roles credentials.Roles
+		var role *credentials.Role
+		var binaryPath string
+		if sessions, err = credentials.GetSessions(); err != nil {
 			ExitWithError(1, "failed to get configured sessions", err)
 		}
-		if len(sessions) == 0 {
-			ExitWithError(2, "no sso sessions found in config", err)
-		}
 		if connectSessionName == "" {
-			p := picker.NewPicker()
-			p.WithMaxHeight(10)
-			p.WithEmptyMessage("No SSO Sessions Found")
-			p.WithTitle("Pick SSO Session")
-			p.WithHeaders("SSO Session", "Region", "SSO Start URL", "Expires In")
-			for _, session := range sessions {
-				expires := "-"
-				if session.ClientToken != nil && !session.ClientToken.IsExpired() {
-					expires = fmt.Sprintf("%.f mins", session.ClientToken.ExpiresAt.Sub(now).Minutes())
-				}
-				p.AddOption(session.Name, session.Name, session.Region, session.StartUrl, expires)
+			if connectSessionName, err = tui.SelectSession(sessions); err != nil {
+				ExitWithError(2, "failed to pick an sso session", err)
 			}
-			selection := p.Pick()
-			if selection == nil {
-				ExitWithError(3, "failed to pick an sso session", err)
-			}
-			connectSessionName = selection.Value.(string)
 		}
-		session := sessions.FindByName(connectSessionName)
-		if session == nil {
-			ExitWithError(4, "session with passed name not found", err)
+		if session = sessions.FindByName(connectSessionName); session == nil {
+			ExitWithError(3, "session with passed name not found", err)
 		}
 		if session.ClientToken == nil || session.ClientToken.IsExpired() {
-			err := ClientLogin(session)
-			if err != nil {
-				ExitWithError(5, "failed to authorize device login", err)
+			if err = tui.ClientLogin(session); err != nil {
+				ExitWithError(4, "failed to authorize device login", err)
 			}
 		}
 		if connectAccountId == "" {
-			connectAccountIds, err := session.GetAccounts()
-			if err != nil {
-				ExitWithError(6, "failed to get account ids", err)
+			if connectAccountId, err = tui.SelectAccount(session); err != nil {
+				ExitWithError(5, "failed to pick an account id", err)
 			}
-			if len(connectAccountIds) == 0 {
-				ExitWithError(7, "no accounts found", err)
-			}
-			p := picker.NewPicker()
-			p.WithMaxHeight(5)
-			p.WithEmptyMessage("No Accounts Found")
-			p.WithTitle("Pick Account")
-			p.WithHeaders("Account ID", "Name", "Email")
-			for _, account := range connectAccountIds {
-				p.AddOption(account.Id, account.Id, account.Name, account.Email)
-			}
-			selection := p.Pick()
-			if selection == nil {
-				ExitWithError(8, "failed to pick an account id", err)
-			}
-			connectAccountId = selection.Value.(string)
 		}
-		roles, err := session.GetRoles(connectAccountId)
+		if roles, err = session.GetRoles(connectAccountId); err != nil {
+			ExitWithError(6, "failed to get roles", err)
+		}
 		if connectRoleName == "" {
-			if err != nil {
-				ExitWithError(9, "failed to get roles", err)
+			if connectRoleName, err = tui.SelectRole(roles); err != nil {
+				ExitWithError(7, "failed to pick a role", err)
 			}
-			p := picker.NewPicker()
-			p.WithMaxHeight(5)
-			p.WithEmptyMessage("No Roles Found")
-			p.WithTitle("Pick Role")
-			p.WithHeaders("Role Name", "Expires In")
-			for _, role := range roles {
-				expires := "-"
-				if role.Credentials != nil && !role.Credentials.IsExpired() {
-					expires = fmt.Sprintf("%.f mins", role.Credentials.Expiration.Sub(now).Minutes())
-				}
-				p.AddOption(role.Name, role.Name, expires)
-			}
-			selection := p.Pick()
-			if selection == nil {
-				ExitWithError(10, "failed to pick a role name", err)
-			}
-			connectRoleName = selection.Value.(string)
 		}
-		role := roles.FindByName(connectRoleName)
-		if role == nil {
-			ExitWithError(11, "role with passed name not found", err)
+		if role = roles.FindByName(connectRoleName); role == nil {
+			ExitWithError(8, "role with passed name not found", err)
 		}
 		if role.Credentials == nil || role.Credentials.IsExpired() {
-			err := session.RefreshRoleCredentials(role)
-			if err != nil {
-				ExitWithError(12, "failed to get credentials", err)
+			if err = session.RefreshRoleCredentials(role); err != nil {
+				ExitWithError(9, "failed to get credentials", err)
 			}
-			err = role.Credentials.Save(session.Name, role.CacheKey())
-			if err != nil {
-				ExitWithError(13, "failed to save credentials", err)
+			if err = role.Credentials.Save(session.Name, role.CacheKey()); err != nil {
+				ExitWithError(10, "failed to save credentials", err)
 			}
 		}
 		if err := role.MarkLastUsed(); err != nil {
-			ExitWithError(14, "failed to mark last used role", err)
+			ExitWithError(11, "failed to mark last used role", err)
 		}
 		if connectInstanceId == "" {
-			instances, err := role.GetManagedInstances()
-			if err != nil {
-				ExitWithError(15, "failed to get instances", err)
+			if connectInstanceId, err = tui.SelectInstance(role); err != nil {
+				ExitWithError(12, "failed to pick an instance", err)
 			}
-			if len(instances) == 0 {
-				ExitWithError(16, "no instances found", err)
-			}
-			p := picker.NewPicker()
-			p.WithMaxHeight(10)
-			p.WithEmptyMessage("No Instances Found")
-			p.WithTitle("Pick EC2 Instance")
-			p.WithHeaders("Instance ID", "Instance Type", "Private IP", "Public IP", "Name")
-			for _, instance := range instances {
-				p.AddOption(instance.Id, instance.Id, instance.InstanceType, instance.PrivateIpAddress, instance.PublicIpAddress, instance.Name)
-			}
-			selection := p.Pick()
-			if selection == nil {
-				ExitWithError(17, "failed to pick an instance id", err)
-			}
-			connectInstanceId = selection.Value.(string)
 		}
 		details, err := role.StartSession(connectInstanceId, connectUid)
 		if err != nil {
-			ExitWithError(18, "failed to start ssm session", err)
+			ExitWithError(13, "failed to start ssm session", err)
 		}
-		binaryPath, err := exec.LookPath("session-manager-plugin")
-		if err != nil {
-			ExitWithError(19, "failed to find session-manager-plugin, see "+SESSION_MANAGER_PLUGIN_URL, err)
+		if binaryPath, err = exec.LookPath("session-manager-plugin"); err != nil {
+			ExitWithError(14, "failed to find session-manager-plugin, see "+SESSION_MANAGER_PLUGIN_URL, err)
 		}
 		command := exec.Command(
 			binaryPath,
@@ -170,12 +101,10 @@ var connectCmd = &cobra.Command{
 		command.Stdin = os.Stdin
 		command.Stdout = os.Stdout
 		command.Stderr = os.Stderr
-		command.SysProcAttr = &syscall.SysProcAttr{ Setpgid: true, Foreground: true }
-		err = command.Run()
-		if err != nil {
-			ExitWithError(20, "failed to run session-manager-plugin", err)
+		command.SysProcAttr = &syscall.SysProcAttr{Setpgid: true, Foreground: true}
+		if err = command.Run(); err != nil {
+			ExitWithError(15, "failed to run session-manager-plugin", err)
 		}
-		fmt.Println ("EXITED")
 	},
 }
 

@@ -2,10 +2,9 @@ package internal
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/null93/aws-knox/sdk/credentials"
-	"github.com/null93/aws-knox/sdk/picker"
+	"github.com/null93/aws-knox/sdk/tui"
 	"github.com/spf13/cobra"
 )
 
@@ -14,60 +13,39 @@ var credsSelectCmd = &cobra.Command{
 	Short: "Pick from cached role credentials",
 	Args:  cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
-		now := time.Now()
-		roles, err := credentials.GetSavedRolesWithCredentials()
-		if err != nil {
-			ExitWithError(1, "failed to get role credentials", err)
-		}
-		p := picker.NewPicker()
-		p.WithMaxHeight(10)
-		p.WithEmptyMessage("No Role Credentials Found")
-		p.WithTitle("Pick Role Credentials")
-		p.WithHeaders("SSO Session", "Region", "Account ID", "Role Name", "Expires In")
-		for _, role := range roles {
-			expires := "-"
-			if role.Credentials != nil && !role.Credentials.IsExpired() {
-				expires = fmt.Sprintf("%.f mins", role.Credentials.Expiration.Sub(now).Minutes())
+		var err error
+		var sessions credentials.Sessions
+		var session *credentials.Session
+		var role *credentials.Role
+		var json string
+		role, err = tui.SelectRolesCredentials()
+		if role.Credentials == nil || role.Credentials.IsExpired() {
+			if sessions, err = credentials.GetSessions(); err != nil {
+				ExitWithError(1, "failed to parse sso sessions", err)
 			}
-			p.AddOption(role, role.SessionName, role.Region, role.AccountId, role.Name, expires)
-		}
-		selection := p.Pick()
-		if selection == nil {
-			ExitWithError(3, "failed to pick role credentials", err)
-		}
-		selectedRole := selection.Value.(credentials.Role)
-		if selectedRole.Credentials.IsExpired() {
-			sessions, err := credentials.GetSessions()
-			if err != nil {
-				ExitWithError(2, "failed to parse sso sessions", err)
-			}
-			session := sessions.FindByName(selectedRole.SessionName)
-			if session == nil {
-				ExitWithError(3, "failed to find sso session "+selectedRole.SessionName, err)
+			if session = sessions.FindByName(role.SessionName); session == nil {
+				ExitWithError(2, "failed to find sso session "+role.SessionName, err)
 			}
 			if session.ClientToken == nil || session.ClientToken.IsExpired() {
-				err := ClientLogin(session)
-				if err != nil {
-					ExitWithError(4, "failed to authorize device login", err)
+				if err = tui.ClientLogin(session); err != nil {
+					ExitWithError(3, "failed to authorize device login", err)
 				}
 			}
-			err = session.RefreshRoleCredentials(&selectedRole)
-			if err != nil {
-				ExitWithError(4, "failed to get credentials", err)
+
+			if err = session.RefreshRoleCredentials(role); err != nil {
+				ExitWithError(9, "failed to get credentials", err)
 			}
-			err = selectedRole.Credentials.Save(session.Name, selectedRole.CacheKey())
-			if err != nil {
-				ExitWithError(5, "failed to save credentials", err)
+			if err = role.Credentials.Save(session.Name, role.CacheKey()); err != nil {
+				ExitWithError(10, "failed to save credentials", err)
 			}
 		}
-		serialized, err := selectedRole.Credentials.ToJSON()
-		if err != nil {
-			ExitWithError(4, "failed to serialize role credentials", err)
+		if err = role.MarkLastUsed(); err != nil {
+			ExitWithError(11, "failed to mark last used role", err)
 		}
-		if err := selectedRole.MarkLastUsed(); err != nil {
-			ExitWithError(5, "failed to mark last used role", err)
+		if json, err = role.Credentials.ToJSON(); err != nil {
+			ExitWithError(12, "failed to serialize role credentials", err)
 		}
-		fmt.Println(serialized)
+		fmt.Println(json)
 	},
 }
 
