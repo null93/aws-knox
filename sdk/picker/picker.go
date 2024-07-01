@@ -191,14 +191,8 @@ func (p *picker) Pick() (*option, *keys.KeyCode) {
 	defer ansi.ClearDown()
 	defer ansi.ShowCursor()
 	p.render()
-	var firedKeyCode keys.KeyCode
+	var firedActionKeyCode * keys.KeyCode
 	keyboard.Listen(func(key keys.Key) (stop bool, err error) {
-		for _, action := range p.actions {
-			if key.Code == action.key {
-				firedKeyCode = action.key
-				return true, nil
-			}
-		}
 		if key.Code == keys.CtrlC {
 			p.selectedIndex = -1
 			return true, nil
@@ -240,13 +234,19 @@ func (p *picker) Pick() (*option, *keys.KeyCode) {
 				p.render()
 			}
 		}
+		for _, action := range p.actions {
+			if key.Code == action.key {
+				firedActionKeyCode = &action.key
+				return true, nil
+			}
+		}
 		return false, nil
 	})
 	if p.selectedIndex < 0 {
-		return nil, nil
+		return nil, firedActionKeyCode
 	}
 	if p.selectedIndex >= len(p.filtered) {
-		return nil, nil
+		return nil, firedActionKeyCode
 	}
-	return p.filtered[p.selectedIndex], &firedKeyCode
+	return p.filtered[p.selectedIndex], firedActionKeyCode
 }

@@ -125,12 +125,10 @@ func SelectRoleCredentialsStartingFromCache() (string, *credentials.Role) {
 	var sessions credentials.Sessions
 	var session *credentials.Session
 	var role *credentials.Role
-	role, action, err = tui.SelectRolesCredentials()
-	if action != "" {
-		return action, nil
-	}
-	if err != nil {
+	if role, action, err = tui.SelectRolesCredentials(); err != nil {
 		ExitWithError(1, "failed to pick a role", err)
+	} else if action != "" {
+		return action, nil
 	}
 	if role.Credentials == nil || role.Credentials.IsExpired() {
 		if sessions, err = credentials.GetSessions(); err != nil {

@@ -20,6 +20,11 @@ import (
 	"gopkg.in/ini.v1"
 )
 
+var (
+	ErrorRoleCredentialsNil = fmt.Errorf("role credentials are nil")
+	ErrRoleNil              = fmt.Errorf("role cannot be nil")
+)
+
 type Instances []Instance
 
 type Instance struct {
@@ -74,7 +79,7 @@ func (r Roles) FindByName(name string) *Role {
 func (r *Role) GetManagedInstances() (Instances, error) {
 	instances := Instances{}
 	if r.Credentials == nil {
-		return instances, fmt.Errorf("role credentials are nil")
+		return instances, ErrorRoleCredentialsNil
 	}
 	staticProvider := awscredentials.NewStaticCredentialsProvider(
 		r.Credentials.AccessKeyId,
@@ -376,7 +381,7 @@ func (s *Session) GetRoles(accountId string) (Roles, error) {
 
 func (s *Session) RefreshRoleCredentials(role *Role) error {
 	if role == nil {
-		return fmt.Errorf("role cannot be nil")
+		return ErrRoleNil
 	}
 	options := sso.Options{Region: s.Region}
 	client := sso.New(options)

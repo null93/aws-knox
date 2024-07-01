@@ -11,17 +11,17 @@ import (
 
 var (
 	cleanAll         = false
-	allowedCleanArgs = []string{"creds", "sso"}
+	allowedCleanArgs = []string{"cached", "sso"}
 )
 
 var cleanCmd = &cobra.Command{
 	Use:       "clean [" + strings.Join(allowedCleanArgs, "] [") + "]",
-	Short:     "Clean sso and role credentials from cache",
+	Short:     "Clean sso client credentials and role credentials from cache",
 	Args:      cobra.RangeArgs(1, 2),
 	ValidArgs: allowedCleanArgs,
-	Example:   "  knox clean creds\n  knox clean sso -a\n  knox clean creds sso",
+	Example:   "  knox clean cached\n  knox clean sso -a\n  knox clean cached sso",
 	Run: func(cmd *cobra.Command, args []string) {
-		if slices.Contains(args, "creds") {
+		if slices.Contains(args, "cached") {
 			roles, err := credentials.GetSavedRolesWithCredentials()
 			if err != nil {
 				ExitWithError(1, "failed to get role credentials", err)
@@ -65,5 +65,5 @@ var cleanCmd = &cobra.Command{
 func init() {
 	RootCmd.AddCommand(cleanCmd)
 	cleanCmd.Flags().SortFlags = true
-	cleanCmd.Flags().BoolVarP(&cleanAll, "all", "a", cleanAll, "Delete even if not expired credentials")
+	cleanCmd.Flags().BoolVarP(&cleanAll, "all", "a", cleanAll, "Delete even if not expired")
 }

@@ -14,7 +14,12 @@ import (
 )
 
 var (
-	MaxItemsToShow int = 10
+	MaxItemsToShow              int = 10
+	ErrNotPickedSession             = fmt.Errorf("no sso session picked")
+	ErrNotPickedAccount             = fmt.Errorf("no account picked")
+	ErrNotPickedRole                = fmt.Errorf("no role picked")
+	ErrNotPickedInstance            = fmt.Errorf("no instance picked")
+	ErrNotPickedRoleCredentials     = fmt.Errorf("no role credentials picked")
 )
 
 func ClientLogin(session *credentials.Session) error {
@@ -74,7 +79,7 @@ func SelectSession(sessions credentials.Sessions) (string, string, error) {
 		return "", "toggle-view", nil
 	}
 	if selection == nil {
-		return "", "", fmt.Errorf("no sso session picked")
+		return "", "", ErrNotPickedSession
 	}
 	return selection.Value.(string), "", nil
 }
@@ -98,7 +103,7 @@ func SelectAccount(session *credentials.Session) (string, string, error) {
 		return "", "back", nil
 	}
 	if selection == nil {
-		return "", "", fmt.Errorf("no account picked")
+		return "", "", ErrNotPickedAccount
 	}
 	return selection.Value.(string), "", nil
 }
@@ -123,7 +128,7 @@ func SelectRole(roles credentials.Roles) (string, string, error) {
 		return "", "back", nil
 	}
 	if selection == nil {
-		return "", "", fmt.Errorf("no role picked")
+		return "", "", ErrNotPickedRole
 	}
 	return selection.Value.(string), "", nil
 }
@@ -147,7 +152,7 @@ func SelectInstance(role *credentials.Role) (string, string, error) {
 		return "", "back", nil
 	}
 	if selection == nil {
-		return "", "", fmt.Errorf("no instance picked")
+		return "", "", ErrNotPickedInstance
 	}
 	return selection.Value.(string), "", nil
 }
@@ -176,7 +181,7 @@ func SelectRolesCredentials() (*credentials.Role, string, error) {
 		return nil, "toggle-view", nil
 	}
 	if selection == nil {
-		return nil, "", fmt.Errorf("no role credentials picked")
+		return nil, "", ErrNotPickedRoleCredentials
 	}
 	selected := selection.Value.(credentials.Role)
 	return &selected, "", nil
