@@ -114,12 +114,12 @@ Recommended configuration for `~/.aws/config`, feel free to swap out the command
 [default]
 region = us-east-1
 output = json
-credential_process = knox creds select
+credential_process = knox select
 
 [profile last]
 region = us-east-1
 output = json
-credential_process = knox creds last-used
+credential_process = knox last-used
 
 [sso-session development-sso]
 sso_region = us-east-1
