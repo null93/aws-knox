@@ -29,7 +29,7 @@ var selectCmd = &cobra.Command{
 				continue
 			}
 			if json, err := role.Credentials.ToJSON(); err != nil {
-				ExitWithError(12, "failed to convert credentials to json", err)
+				ExitWithError(19, "failed to convert credentials to json", err)
 			} else {
 				fmt.Println(json)
 				break

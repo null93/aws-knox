@@ -40,7 +40,7 @@ var connectCmd = &cobra.Command{
 			}
 			if instanceId == "" {
 				if instanceId, action, err = tui.SelectInstance(role); err != nil {
-					ExitWithError(12, "failed to pick an instance", err)
+					ExitWithError(19, "failed to pick an instance", err)
 				} else if action == "back" {
 					goBack()
 					continue
@@ -48,10 +48,10 @@ var connectCmd = &cobra.Command{
 			}
 			details, err := role.StartSession(instanceId, connectUid)
 			if err != nil {
-				ExitWithError(13, "failed to start ssm session", err)
+				ExitWithError(20, "failed to start ssm session", err)
 			}
 			if binaryPath, err = exec.LookPath("session-manager-plugin"); err != nil {
-				ExitWithError(14, "failed to find session-manager-plugin, see "+SESSION_MANAGER_PLUGIN_URL, err)
+				ExitWithError(21, "failed to find session-manager-plugin, see "+SESSION_MANAGER_PLUGIN_URL, err)
 			}
 			command := exec.Command(
 				binaryPath,
@@ -67,7 +67,7 @@ var connectCmd = &cobra.Command{
 			command.Stderr = os.Stderr
 			command.SysProcAttr = &syscall.SysProcAttr{Setpgid: true, Foreground: true}
 			if err = command.Run(); err != nil {
-				ExitWithError(15, "failed to run session-manager-plugin", err)
+				ExitWithError(22, "failed to run session-manager-plugin", err)
 			}
 			break
 		}

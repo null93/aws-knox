@@ -126,31 +126,31 @@ func SelectRoleCredentialsStartingFromCache() (string, *credentials.Role) {
 	var session *credentials.Session
 	var role *credentials.Role
 	if role, action, err = tui.SelectRolesCredentials(); err != nil {
-		ExitWithError(1, "failed to pick a role", err)
+		ExitWithError(12, "failed to cached role credentials", err)
 	} else if action != "" {
 		return action, nil
 	}
 	if role.Credentials == nil || role.Credentials.IsExpired() {
 		if sessions, err = credentials.GetSessions(); err != nil {
-			ExitWithError(1, "failed to parse sso sessions", err)
+			ExitWithError(13, "failed to parse sso sessions", err)
 		}
 		if session = sessions.FindByName(role.SessionName); session == nil {
-			ExitWithError(2, "failed to find sso session "+role.SessionName, err)
+			ExitWithError(14, "failed to find sso session "+role.SessionName, err)
 		}
 		if session.ClientToken == nil || session.ClientToken.IsExpired() {
 			if err = tui.ClientLogin(session); err != nil {
-				ExitWithError(3, "failed to authorize device login", err)
+				ExitWithError(15, "failed to authorize device login", err)
 			}
 		}
 		if err = session.RefreshRoleCredentials(role); err != nil {
-			ExitWithError(9, "failed to get credentials", err)
+			ExitWithError(16, "failed to get credentials", err)
 		}
 		if err = role.Credentials.Save(session.Name, role.CacheKey()); err != nil {
-			ExitWithError(10, "failed to save credentials", err)
+			ExitWithError(17, "failed to save credentials", err)
 		}
 	}
 	if err = role.MarkLastUsed(); err != nil {
-		ExitWithError(11, "failed to mark last used role", err)
+		ExitWithError(18, "failed to mark last used role", err)
 	}
 	return "", role
 }
