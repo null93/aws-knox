@@ -180,7 +180,10 @@ func (p *picker) render() {
 	if p.maxHeight < lines {
 		lines = p.maxHeight
 	}
-	ansi.MoveCursorUp(7 + lines)
+	if len(p.headers) > 0 {
+		lines++
+	}
+	ansi.MoveCursorUp(6 + lines)
 }
 
 func (p *picker) Pick() (*option, *keys.KeyCode) {
