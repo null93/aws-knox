@@ -7,9 +7,15 @@
 
 ## About
 
-Knox is a powerful utility designed to simplify and streamline the process of managing AWS credentials. Whether you're frequently switching between different AWS profiles or managing credentials issuance in an SSO environment, Knox provides a straightforward CLI tool to handle these tasks effortlessly. Commands like `knox select`, `knox last-used`, and `knox clean` make it easy to navigate and manipulate your AWS credential configurations. Its configurable nature, showcased in the `~/.aws/config` setup recommendations, ensures seamless integration into your AWS workflows. Whether you're in development, staging, or production, Knox helps maintain efficient and secure AWS credential management.
+**Knox** is a powerful utility designed to simplify and streamline the management of AWS credentials. Whether you're frequently switching between different AWS profiles or handling credential issuance in an SSO environment, Knox provides a straightforward CLI tool to manage these tasks effortlessly.
 
-Additionally the `knox connect` command provides a simple way to start an SSM session with an EC2 instance. This feature is particularly useful for users who frequently SSH into EC2 instances using SSM Session Manager. Knox allows you to switch between different AWS profiles and start an interactive session with a specific instance using a single command.
+Key features include:
+
+- **Profile Management:** Commands like `knox select`, `knox last-used`, and `knox clean` make it easy to navigate and manipulate your AWS credentials.
+- **Seamless Configuration Handling:** Knox reads your `~/.aws/config` file to get configured SSO sessions and saves used role credentials into `~/.aws/knox` for future use.
+- **SSM Session Management:** The `knox connect` command simplifies the process of starting an SSM session with an EC2 instance. This feature is particularly useful for users who frequently SSH into EC2 instances using SSM Session Manager. With Knox, you can easily switch between different AWS profiles and start an interactive session with a specific instance using a single command.
+
+Knox helps maintain efficient and secure AWS credential management, making it an invaluable tool for your development, staging, and production environments.
 
 ## Install
 
@@ -115,11 +121,6 @@ region = us-east-1
 output = json
 credential_process = knox creds last-used
 
-[profile pick]
-region = us-east-1
-output = json
-credential_process = knox select
-
 [sso-session development-sso]
 sso_region = us-east-1
 sso_registration_scopes = sso:account:access
@@ -134,24 +135,4 @@ sso_start_url = https://d-1111111111.awsapps.com/start
 sso_region = us-east-1
 sso_registration_scopes = sso:account:access
 sso_start_url = https://d-0000000000.awsapps.com/start
-```
-
-## Example
-
-Here is another use-case where this tool can come in handy. If you use SSM Session Manager to SSH into your EC2 instances, you can use knox to switch between different AWS profiles and start an interactive session with a specific instance. Here is an example of how you can achieve this:
-
-```shell
-function ssh-aws () {
-    if [[ $# -ne 1 ]]; then
-        echo "Usage: ssh-aws <instance-id>"
-        return 1
-    fi
-    aws --profile pick ssm start-session --target $1 --document-name AWS-StartInteractiveCommand --parameters command="sudo su - \`id -un 9001\`"
-}
-```
-
-Now you can SSH into an EC2 instance using the following command:
-
-```
-$ ssh-aws i-00000000000000000
 ```
