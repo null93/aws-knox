@@ -36,17 +36,17 @@ Knox helps maintain efficient and secure AWS credential management, making it an
   ### amd64
 
   ```shell
-  curl -sL -o ./aws-knox_1.0.3_amd64.deb https://github.com/null93/aws-knox/releases/download/1.0.3/aws-knox_1.0.3_amd64.deb
-  sudo dpkg -i ./aws-knox_1.0.3_amd64.deb
-  rm ./aws-knox_1.0.3_amd64.deb
+  curl -sL -o ./aws-knox_2.0.0_amd64.deb https://github.com/null93/aws-knox/releases/download/2.0.0/aws-knox_2.0.0_amd64.deb
+  sudo dpkg -i ./aws-knox_2.0.0_amd64.deb
+  rm ./aws-knox_2.0.0_amd64.deb
   ```
 
   ### arm64
 
   ```shell
-  curl -sL -o ./aws-knox_1.0.3_arm64.deb https://github.com/null93/aws-knox/releases/download/1.0.3/aws-knox_1.0.3_arm64.deb
-  sudo dpkg -i ./aws-knox_1.0.3_arm64.deb
-  rm ./aws-knox_1.0.3_arm64.deb
+  curl -sL -o ./aws-knox_2.0.0_arm64.deb https://github.com/null93/aws-knox/releases/download/2.0.0/aws-knox_2.0.0_arm64.deb
+  sudo dpkg -i ./aws-knox_2.0.0_arm64.deb
+  rm ./aws-knox_2.0.0_arm64.deb
   ```
 </details>
 
@@ -56,13 +56,13 @@ Knox helps maintain efficient and secure AWS credential management, making it an
   ### aarch64
 
   ```shell
-  rpm -i https://github.com/null93/aws-knox/releases/download/1.0.3/aws-knox-1.0.3-1.aarch64.rpm
+  rpm -i https://github.com/null93/aws-knox/releases/download/2.0.0/aws-knox-2.0.0-1.aarch64.rpm
   ```
 
   ### x86_64
 
   ```shell
-  rpm -i https://github.com/null93/aws-knox/releases/download/1.0.3/aws-knox-1.0.3-1.x86_64.rpm
+  rpm -i https://github.com/null93/aws-knox/releases/download/2.0.0/aws-knox-2.0.0-1.x86_64.rpm
   ```
 </details>
 
@@ -72,17 +72,17 @@ Knox helps maintain efficient and secure AWS credential management, making it an
   ### aarch64
 
   ```shell
-  curl -sL -o ./aws-knox_1.0.3_aarch64.apk https://github.com/null93/aws-knox/releases/download/1.0.3/aws-knox_1.0.3_aarch64.apk
-  apk add --allow-untrusted ./aws-knox_1.0.3_aarch64.apk
-  rm ./aws-knox_1.0.3_aarch64.apk
+  curl -sL -o ./aws-knox_2.0.0_aarch64.apk https://github.com/null93/aws-knox/releases/download/2.0.0/aws-knox_2.0.0_aarch64.apk
+  apk add --allow-untrusted ./aws-knox_2.0.0_aarch64.apk
+  rm ./aws-knox_2.0.0_aarch64.apk
   ```
 
   ### x86_64
 
   ```shell
-  curl -sL -o ./aws-knox_1.0.3_x86_64.apk https://github.com/null93/aws-knox/releases/download/1.0.3/aws-knox_1.0.3_x86_64.apk
-  apk add --allow-untrusted ./aws-knox_1.0.3_x86_64.apk
-  rm ./aws-knox_1.0.3_x86_64.apk
+  curl -sL -o ./aws-knox_2.0.0_x86_64.apk https://github.com/null93/aws-knox/releases/download/2.0.0/aws-knox_2.0.0_x86_64.apk
+  apk add --allow-untrusted ./aws-knox_2.0.0_x86_64.apk
+  rm ./aws-knox_2.0.0_x86_64.apk
   ```
 </details>
 
@@ -92,17 +92,17 @@ Knox helps maintain efficient and secure AWS credential management, making it an
   ### aarch64
 
   ```shell
-  curl -sL -o ./aws-knox-1.0.3-1-aarch64.pkg.tar.zst https://github.com/null93/aws-knox/releases/download/1.0.3/aws-knox-1.0.3-1-aarch64.pkg.tar.zst
-  sudo pacman -U ./aws-knox-1.0.3-1-aarch64.pkg.tar.zst
-  rm ./aws-knox-1.0.3-1-aarch64.pkg.tar.zst
+  curl -sL -o ./aws-knox-2.0.0-1-aarch64.pkg.tar.zst https://github.com/null93/aws-knox/releases/download/2.0.0/aws-knox-2.0.0-1-aarch64.pkg.tar.zst
+  sudo pacman -U ./aws-knox-2.0.0-1-aarch64.pkg.tar.zst
+  rm ./aws-knox-2.0.0-1-aarch64.pkg.tar.zst
   ```
 
   ### x86_64
 
   ```shell
-  curl -sL -o ./aws-knox-1.0.3-1-x86_64.pkg.tar.zst https://github.com/null93/aws-knox/releases/download/1.0.3/aws-knox-1.0.3-1-x86_64.pkg.tar.zst
-  sudo pacman -U ./aws-knox-1.0.3-1-x86_64.pkg.tar.zst
-  rm ./aws-knox-1.0.3-1-x86_64.pkg.tar.zst
+  curl -sL -o ./aws-knox-2.0.0-1-x86_64.pkg.tar.zst https://github.com/null93/aws-knox/releases/download/2.0.0/aws-knox-2.0.0-1-x86_64.pkg.tar.zst
+  sudo pacman -U ./aws-knox-2.0.0-1-x86_64.pkg.tar.zst
+  rm ./aws-knox-2.0.0-1-x86_64.pkg.tar.zst
   ```
 </details>
 
