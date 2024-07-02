@@ -28,6 +28,12 @@ var selectCmd = &cobra.Command{
 				goBack()
 				continue
 			}
+			if action == "delete" {
+				if role != nil && role.Credentials != nil {
+					role.Credentials.DeleteCache(role.SessionName, role.CacheKey())
+				}
+				continue
+			}
 			if json, err := role.Credentials.ToJSON(); err != nil {
 				ExitWithError(19, "failed to convert credentials to json", err)
 			} else {
