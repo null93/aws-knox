@@ -23,7 +23,7 @@ var (
 )
 
 func ClientLogin(session *credentials.Session) error {
-	if session.ClientCredentials.IsExpired() {
+	if session.ClientCredentials == nil || session.ClientCredentials.IsExpired() {
 		if err := session.RegisterClient(); err != nil {
 			return err
 		}
