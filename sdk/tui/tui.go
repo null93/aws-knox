@@ -23,37 +23,40 @@ var (
 )
 
 func ClientLogin(session *credentials.Session) error {
-	if err := session.RegisterClient(); err != nil {
-		return err
-	}
-	userCode, deviceCode, url, urlFull, err := session.StartDeviceAuthorization()
-	if err != nil {
-		return err
-	}
-	yellow := color.ToForeground(YellowColor).Decorator()
-	gray := color.ToForeground(LightGrayColor).Decorator()
-	title := TitleStyle.Decorator()
-	DefaultStyle.Printfln("")
-	DefaultStyle.Printfln("%s %s", title("SSO Session:      "), gray(session.Name))
-	DefaultStyle.Printfln("%s %s", title("SSO Start URL:    "), gray(session.StartUrl))
-	DefaultStyle.Printfln("%s %s", title("Authorization URL:"), gray(url))
-	DefaultStyle.Printfln("%s %s", title("Device Code:      "), yellow(userCode))
-	DefaultStyle.Printfln("")
-	DefaultStyle.Printf("Waiting for authorization to complete...")
-	err = browser.OpenURL(urlFull)
-	if err != nil {
+	if session.ClientCredentials.IsExpired() {
+		if err := session.RegisterClient(); err != nil {
+			return err
+		}
+		userCode, deviceCode, url, urlFull, err := session.StartDeviceAuthorization()
+		if err != nil {
+			return err
+		}
+		yellow := color.ToForeground(YellowColor).Decorator()
+		gray := color.ToForeground(LightGrayColor).Decorator()
+		title := TitleStyle.Decorator()
+		DefaultStyle.Printfln("")
+		DefaultStyle.Printfln("%s %s", title("SSO Session:      "), gray(session.Name))
+		DefaultStyle.Printfln("%s %s", title("SSO Start URL:    "), gray(session.StartUrl))
+		DefaultStyle.Printfln("%s %s", title("Authorization URL:"), gray(url))
+		DefaultStyle.Printfln("%s %s", title("Device Code:      "), yellow(userCode))
+		DefaultStyle.Printfln("")
+		DefaultStyle.Printf("Waiting for authorization to complete...")
+		err = browser.OpenURL(urlFull)
+		if err != nil {
+			ansi.MoveCursorUp(6)
+			ansi.ClearDown()
+			return err
+		}
+		err = session.WaitForToken(deviceCode)
 		ansi.MoveCursorUp(6)
 		ansi.ClearDown()
+		if err != nil {
+			return err
+		}
+	} else if err := session.RefreshToken(); err != nil {
 		return err
 	}
-	err = session.WaitForToken(deviceCode)
-	ansi.MoveCursorUp(6)
-	ansi.ClearDown()
-	if err != nil {
-		return err
-	}
-	err = session.Save()
-	if err != nil {
+	if err := session.Save(); err != nil {
 		return err
 	}
 	return nil

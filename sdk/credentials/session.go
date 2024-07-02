@@ -326,6 +326,31 @@ func (s *Session) WaitForToken(deviceCode string) error {
 	return nil
 }
 
+func (s *Session) RefreshToken() error {
+	options := ssooidc.Options{Region: s.Region}
+	client := ssooidc.New(options)
+	token, err := client.CreateToken(context.TODO(), &ssooidc.CreateTokenInput{
+		ClientId:     aws.String(s.ClientCredentials.ClientId),
+		ClientSecret: aws.String(s.ClientCredentials.ClientSecret),
+		RefreshToken: aws.String(s.ClientToken.RefreshToken),
+		GrantType:    aws.String("refresh_token"),
+	})
+	if err != nil {
+		return err
+	}
+	s.ClientToken = &ClientToken{
+		AccessToken:           aws.ToString(token.AccessToken),
+		ClientId:              s.ClientCredentials.ClientId,
+		ClientSecret:          s.ClientCredentials.ClientSecret,
+		ExpiresAt:             time.Now().Add(time.Duration(token.ExpiresIn) * time.Second).UTC(),
+		RefreshToken:          aws.ToString(token.RefreshToken),
+		Region:                s.Region,
+		RegistrationExpiresAt: s.ClientCredentials.ExpiresAt,
+		StartUrl:              s.StartUrl,
+	}
+	return nil
+}
+
 func (s *Session) GetAccounts() (Accounts, error) {
 	accounts := Accounts{}
 	options := sso.Options{Region: s.Region}
