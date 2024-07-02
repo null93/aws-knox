@@ -169,6 +169,7 @@ func SelectRolesCredentials() (*credentials.Role, string, error) {
 	p.WithTitle("Pick Role Credentials")
 	p.WithHeaders("SSO Session", "Region", "Account ID", "Role Name", "Expires In")
 	p.AddAction(keys.Tab, "tab", "pick session")
+	p.AddAction(keys.Delete, "del", "delete")
 	for _, role := range roles {
 		expires := "-"
 		if role.Credentials != nil && !role.Credentials.IsExpired() {
@@ -179,6 +180,13 @@ func SelectRolesCredentials() (*credentials.Role, string, error) {
 	selection, firedKeyCode := p.Pick()
 	if firedKeyCode != nil && *firedKeyCode == keys.Tab {
 		return nil, "toggle-view", nil
+	}
+	if firedKeyCode != nil && *firedKeyCode == keys.Delete {
+		if selection != nil {
+			selected := selection.Value.(credentials.Role)
+			return &selected, "delete", nil
+		}
+		return nil, "delete", nil
 	}
 	if selection == nil {
 		return nil, "", ErrNotPickedRoleCredentials

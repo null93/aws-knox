@@ -128,7 +128,7 @@ func SelectRoleCredentialsStartingFromCache() (string, *credentials.Role) {
 	if role, action, err = tui.SelectRolesCredentials(); err != nil {
 		ExitWithError(12, "failed to cached role credentials", err)
 	} else if action != "" {
-		return action, nil
+		return action, role
 	}
 	if role.Credentials == nil || role.Credentials.IsExpired() {
 		if sessions, err = credentials.GetSessions(); err != nil {

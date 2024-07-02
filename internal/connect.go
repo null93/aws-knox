@@ -38,6 +38,12 @@ var connectCmd = &cobra.Command{
 				goBack()
 				continue
 			}
+			if action == "delete" {
+				if role != nil && role.Credentials != nil {
+					role.Credentials.DeleteCache(role.SessionName, role.CacheKey())
+				}
+				continue
+			}
 			if instanceId == "" {
 				if instanceId, action, err = tui.SelectInstance(role); err != nil {
 					ExitWithError(19, "failed to pick an instance", err)
