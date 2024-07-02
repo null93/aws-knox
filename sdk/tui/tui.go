@@ -65,14 +65,25 @@ func SelectSession(sessions credentials.Sessions) (string, string, error) {
 	p.WithMaxHeight(MaxItemsToShow)
 	p.WithEmptyMessage("No SSO Sessions Found")
 	p.WithTitle("Pick SSO Session")
-	p.WithHeaders("SSO Session", "Region", "SSO Start URL", "Expires In")
+	p.WithHeaders("SSO Session", "Region", "SSO Start URL", "Refreshable", "Expires In")
 	p.AddAction(keys.Tab, "tab", "view cached")
 	for _, session := range sessions {
 		expires := "-"
+		refreshable := "-"
 		if session.ClientToken != nil && !session.ClientToken.IsExpired() {
 			expires = fmt.Sprintf("%.f mins", session.ClientToken.ExpiresAt.Sub(now).Minutes())
 		}
-		p.AddOption(session.Name, session.Name, session.Region, session.StartUrl, expires)
+		if session.ClientCredentials != nil && !session.ClientCredentials.IsExpired() {
+			hours := session.ClientCredentials.ExpiresAt.Sub(now).Hours()
+			if hours < 1 {
+				refreshable = fmt.Sprintf("%.f mins", hours * 60)
+			} else if hours < 24 {
+				refreshable = fmt.Sprintf("%.f hours", hours)
+			} else {
+				refreshable = fmt.Sprintf("%.f days", hours / 24)
+			}
+		}
+		p.AddOption(session.Name, session.Name, session.Region, session.StartUrl, refreshable, expires)
 	}
 	selection, firedKeyCode := p.Pick()
 	if firedKeyCode != nil && *firedKeyCode == keys.Tab {

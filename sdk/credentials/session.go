@@ -268,7 +268,7 @@ func (s *Session) RegisterClient() error {
 	s.ClientCredentials = &ClientCredentials{
 		ClientId:     *register.ClientId,
 		ClientSecret: *register.ClientSecret,
-		ExpiresAt:    time.Now().Add(time.Duration(register.ClientSecretExpiresAt) * time.Second).UTC(),
+		ExpiresAt:    time.Unix(register.ClientSecretExpiresAt, 0).UTC(),
 		Scopes:       s.Scopes,
 	}
 	return nil
