@@ -23,6 +23,9 @@ var (
 )
 
 func ClientLogin(session *credentials.Session) error {
+	if session.ClientCredentials != nil && !session.ClientCredentials.IsExpired() {
+		session.RefreshToken()
+	}
 	if session.ClientCredentials == nil || session.ClientCredentials.IsExpired() {
 		if err := session.RegisterClient(); err != nil {
 			return err
@@ -53,8 +56,6 @@ func ClientLogin(session *credentials.Session) error {
 		if err != nil {
 			return err
 		}
-	} else if err := session.RefreshToken(); err != nil {
-		return err
 	}
 	if err := session.Save(); err != nil {
 		return err
