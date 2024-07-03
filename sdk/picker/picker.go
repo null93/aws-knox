@@ -191,7 +191,7 @@ func (p *picker) Pick() (*option, *keys.KeyCode) {
 	defer ansi.ClearDown()
 	defer ansi.ShowCursor()
 	p.render()
-	var firedActionKeyCode * keys.KeyCode
+	var firedActionKeyCode *keys.KeyCode
 	keyboard.Listen(func(key keys.Key) (stop bool, err error) {
 		if key.Code == keys.CtrlC {
 			p.selectedIndex = -1
