@@ -23,10 +23,15 @@ var (
 )
 
 func ClientLogin(session *credentials.Session) error {
+	attemptReauth := false
 	if session.ClientCredentials != nil && !session.ClientCredentials.IsExpired() {
-		session.RefreshToken()
+		// Try to refresh. If it works, then it works. If it fails, then we need to re-auth.
+		err := session.RefreshToken()
+		if err != nil {
+			attemptReauth = true
+		}
 	}
-	if session.ClientCredentials == nil || session.ClientCredentials.IsExpired() {
+	if session.ClientCredentials == nil || session.ClientCredentials.IsExpired() || attemptReauth {
 		if err := session.RegisterClient(); err != nil {
 			return err
 		}
