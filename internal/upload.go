@@ -18,6 +18,7 @@ uid = 0
 gid = 0
 use chroot = yes
 read only = false
+hosts allow = 127.0.0.1
 
 [upload]
 path = /root/upload
