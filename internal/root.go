@@ -24,6 +24,10 @@ var (
 	instanceId        string
 )
 
+const (
+	SESSION_MANAGER_PLUGIN_URL = "https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html"
+)
+
 var RootCmd = &cobra.Command{
 	Use:     "knox",
 	Version: Version,

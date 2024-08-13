@@ -53,6 +53,43 @@ func (r *Role) StartSession(instanceId string, defaultUid uint32) (*ssm.StartSes
 	return client.StartSession(context.TODO(), &input)
 }
 
+func (r *Role) StartCommand(instanceId string, command string) (*ssm.StartSessionOutput, error) {
+	staticProvider := awscredentials.NewStaticCredentialsProvider(
+		r.Credentials.AccessKeyId,
+		r.Credentials.SecretAccessKey,
+		r.Credentials.SessionToken,
+	)
+	options := ssm.Options{Region: "us-east-1", Credentials: staticProvider}
+	client := ssm.New(options)
+	input := ssm.StartSessionInput{
+		Target:       &instanceId,
+		DocumentName: aws.String("AWS-StartInteractiveCommand"),
+		Parameters: map[string][]string{
+			"command": {fmt.Sprintf("sudo -u root bash -c %q", command)},
+		},
+	}
+	return client.StartSession(context.TODO(), &input)
+}
+
+func (r *Role) StartPortForward(instanceId string, port, localPort uint16) (*ssm.StartSessionOutput, error) {
+	staticProvider := awscredentials.NewStaticCredentialsProvider(
+		r.Credentials.AccessKeyId,
+		r.Credentials.SecretAccessKey,
+		r.Credentials.SessionToken,
+	)
+	options := ssm.Options{Region: "us-east-1", Credentials: staticProvider}
+	client := ssm.New(options)
+	input := ssm.StartSessionInput{
+		Target:       &instanceId,
+		DocumentName: aws.String("AWS-StartPortForwardingSession"),
+		Parameters: map[string][]string{
+			"portNumber":      []string{fmt.Sprintf("%d", port)},
+			"localPortNumber": []string{fmt.Sprintf("%d", localPort)},
+		},
+	}
+	return client.StartSession(context.TODO(), &input)
+}
+
 type Roles []Role
 
 type Role struct {

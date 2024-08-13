@@ -11,10 +11,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	SESSION_MANAGER_PLUGIN_URL = "https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html"
-)
-
 var connectCmd = &cobra.Command{
 	Use:   "connect",
 	Short: "Connect to an EC2 instance using session-manager-plugin",
