@@ -20,14 +20,14 @@ use chroot = yes
 read only = false
 hosts allow = 127.0.0.1
 
-[upload]
-path = /root/upload
-comment = knox upload
+[sync]
+path = /root/knox-sync
+comment = knox sync
 `
 
 const RSYNC_INIT_SCRIPT = `
 if ! command -v rsync > /dev/null; then echo "EXIT_CODE: 45"; exit 45; fi;
-if ! [ -d /root/upload ]; then mkdir -p /root/upload; fi;
+if ! [ -d /root/knox-sync ]; then mkdir -p /root/knox-sync; fi;
 if [ -f /run/knox-rsyncd.pid ]; then echo "EXIT_CODE: 46"; exit 46; fi;
 `
 
@@ -66,7 +66,7 @@ func rsyncInit(role *credentials.Role, instanceId string) {
 	}
 	if debug {
 		fmt.Println("Debug: rsync detected on the target instance")
-		fmt.Println("Debug: ensuring /root/upload folder exists")
+		fmt.Println("Debug: ensuring /root/knox-sync folder exists")
 		fmt.Println("Debug: making sure another rsync daemon is not running")
 	}
 }
@@ -161,8 +161,8 @@ func rsyncPortForward(role *credentials.Role, instanceId string) {
 	}
 }
 
-var uploadCmd = &cobra.Command{
-	Use:   "upload",
+var syncCmd = &cobra.Command{
+	Use:   "sync",
 	Short: "start rsyncd and port forward to it",
 	Args:  cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -197,8 +197,8 @@ var uploadCmd = &cobra.Command{
 					continue
 				}
 			}
-			fmt.Println("Remote Destination:  /root/upload")
-			fmt.Printf("Example Command:     rsync -P ./dump.sql ./release.tar.gz rsync://127.0.0.1:%d/upload\n", localPort)
+			fmt.Println("Remote Destination:  /root/knox-sync")
+			fmt.Printf("Example Command:     rsync -P ./dump.sql ./release.tar.gz rsync://127.0.0.1:%d/sync\n", localPort)
 			fmt.Println()
 			defer rsyncClean(role, instanceId)
 			defer func() {
@@ -216,13 +216,13 @@ var uploadCmd = &cobra.Command{
 }
 
 func init() {
-	RootCmd.AddCommand(uploadCmd)
-	uploadCmd.Flags().SortFlags = true
-	uploadCmd.Flags().StringVarP(&sessionName, "sso-session", "s", sessionName, "SSO session name")
-	uploadCmd.Flags().StringVarP(&accountId, "account-id", "a", accountId, "AWS account ID")
-	uploadCmd.Flags().StringVarP(&roleName, "role-name", "r", roleName, "AWS role name")
-	uploadCmd.Flags().StringVarP(&instanceId, "instance-id", "i", instanceId, "EC2 instance ID")
-	uploadCmd.Flags().Uint16VarP(&rsyncPort, "rsync-port", "P", rsyncPort, "rsync port")
-	uploadCmd.Flags().Uint16VarP(&localPort, "local-port", "p", localPort, "local port")
-	uploadCmd.Flags().BoolVarP(&selectCachedFirst, "cached", "c", selectCachedFirst, "select from cached credentials")
+	RootCmd.AddCommand(syncCmd)
+	syncCmd.Flags().SortFlags = true
+	syncCmd.Flags().StringVarP(&sessionName, "sso-session", "s", sessionName, "SSO session name")
+	syncCmd.Flags().StringVarP(&accountId, "account-id", "a", accountId, "AWS account ID")
+	syncCmd.Flags().StringVarP(&roleName, "role-name", "r", roleName, "AWS role name")
+	syncCmd.Flags().StringVarP(&instanceId, "instance-id", "i", instanceId, "EC2 instance ID")
+	syncCmd.Flags().Uint16VarP(&rsyncPort, "rsync-port", "P", rsyncPort, "rsync port")
+	syncCmd.Flags().Uint16VarP(&localPort, "local-port", "p", localPort, "local port")
+	syncCmd.Flags().BoolVarP(&selectCachedFirst, "cached", "c", selectCachedFirst, "select from cached credentials")
 }
