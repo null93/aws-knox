@@ -186,7 +186,9 @@ func (p *picker) render() {
 	ansi.MoveCursorUp(6 + lines)
 }
 
-func (p *picker) Pick() (*option, *keys.KeyCode) {
+func (p *picker) Pick(initialFilter string) (*option, *keys.KeyCode) {
+	p.term = initialFilter
+	p.filter()
 	ansi.HideCursor()
 	defer ansi.ClearDown()
 	defer ansi.ShowCursor()

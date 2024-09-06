@@ -84,7 +84,7 @@ func SelectSession(sessions credentials.Sessions) (string, string, error) {
 		}
 		p.AddOption(session.Name, session.Name, session.Region, session.StartUrl, expires)
 	}
-	selection, firedKeyCode := p.Pick()
+	selection, firedKeyCode := p.Pick("")
 	if firedKeyCode != nil && *firedKeyCode == keys.Tab {
 		return "", "toggle-view", nil
 	}
@@ -114,7 +114,7 @@ func SelectAccount(session *credentials.Session, accountAliases map[string]strin
 		}
 		p.AddOption(account.Id, account.Id, name, account.Email)
 	}
-	selection, firedKeyCode := p.Pick()
+	selection, firedKeyCode := p.Pick("")
 	if firedKeyCode != nil && *firedKeyCode == keys.Esc {
 		return "", "back", nil
 	}
@@ -139,7 +139,7 @@ func SelectRole(roles credentials.Roles) (string, string, error) {
 		}
 		p.AddOption(role.Name, role.Name, expires)
 	}
-	selection, firedKeyCode := p.Pick()
+	selection, firedKeyCode := p.Pick("")
 	if firedKeyCode != nil && *firedKeyCode == keys.Esc {
 		return "", "back", nil
 	}
@@ -149,7 +149,7 @@ func SelectRole(roles credentials.Roles) (string, string, error) {
 	return selection.Value.(string), "", nil
 }
 
-func SelectInstance(role *credentials.Role) (string, string, error) {
+func SelectInstance(role *credentials.Role, initialFilter string) (string, string, error) {
 	instances, err := role.GetManagedInstances()
 	if err != nil {
 		return "", "", err
@@ -163,7 +163,7 @@ func SelectInstance(role *credentials.Role) (string, string, error) {
 	for _, instance := range instances {
 		p.AddOption(instance.Id, instance.Id, instance.InstanceType, instance.PrivateIpAddress, instance.PublicIpAddress, instance.Name)
 	}
-	selection, firedKeyCode := p.Pick()
+	selection, firedKeyCode := p.Pick(initialFilter)
 	if firedKeyCode != nil && *firedKeyCode == keys.Esc {
 		return "", "back", nil
 	}
@@ -199,7 +199,7 @@ func SelectRolesCredentials(accountAliases map[string]string) (*credentials.Role
 		}
 		p.AddOption(role, role.SessionName, role.Region, role.AccountId, alias, role.Name, expires)
 	}
-	selection, firedKeyCode := p.Pick()
+	selection, firedKeyCode := p.Pick("")
 	if firedKeyCode != nil && *firedKeyCode == keys.Tab {
 		return nil, "toggle-view", nil
 	}

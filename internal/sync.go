@@ -162,35 +162,70 @@ func rsyncPortForward(role *credentials.Role, instanceId string) {
 }
 
 var syncCmd = &cobra.Command{
-	Use:   "sync",
+	Use:   "sync <instance-search-term>",
 	Short: "start rsyncd and port forward to it",
-	Args:  cobra.ExactArgs(0),
+	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		searchTerm := ""
+		if len(args) > 0 {
+			searchTerm = args[0]
+		}
 		var err error
 		var role *credentials.Role
 		var action string
-		for {
-			if !selectCachedFirst {
-				action, role = SelectRoleCredentialsStartingFromSession()
-			} else {
-				action, role = SelectRoleCredentialsStartingFromCache()
+		if lastUsed {
+			var err error
+			var sessions credentials.Sessions
+			var session *credentials.Session
+			var roleTemp credentials.Role
+			if roleTemp, err = credentials.GetLastUsedRole(); err != nil {
+				ExitWithError(1, "failed to get last used role", err)
 			}
-			if action == "toggle-view" {
-				toggleView()
-				continue
-			}
-			if action == "back" {
-				goBack()
-				continue
-			}
-			if action == "delete" {
-				if role != nil && role.Credentials != nil {
-					role.Credentials.DeleteCache(role.SessionName, role.CacheKey())
+			role = &roleTemp
+			if role.Credentials == nil || role.Credentials.IsExpired() {
+				if sessions, err = credentials.GetSessions(); err != nil {
+					ExitWithError(2, "failed to parse sso sessions", err)
 				}
-				continue
+				if session = sessions.FindByName(role.SessionName); session == nil {
+					ExitWithError(3, "failed to find sso session "+role.SessionName, err)
+				}
+				if session.ClientToken == nil || session.ClientToken.IsExpired() {
+					if err = tui.ClientLogin(session); err != nil {
+						ExitWithError(4, "failed to authorize device login", err)
+					}
+				}
+				if err = session.RefreshRoleCredentials(role); err != nil {
+					ExitWithError(5, "failed to get credentials", err)
+				}
+				if err = role.Credentials.Save(session.Name, role.CacheKey()); err != nil {
+					ExitWithError(6, "failed to save credentials", err)
+				}
+			}
+		}
+		for {
+			if role == nil {
+				if !selectCachedFirst {
+					action, role = SelectRoleCredentialsStartingFromSession()
+				} else {
+					action, role = SelectRoleCredentialsStartingFromCache()
+				}
+				if action == "toggle-view" {
+					toggleView()
+					continue
+				}
+				if action == "back" {
+					goBack()
+					continue
+				}
+				if action == "delete" {
+					if role != nil && role.Credentials != nil {
+						role.Credentials.DeleteCache(role.SessionName, role.CacheKey())
+					}
+					continue
+				}
 			}
 			if instanceId == "" {
-				if instanceId, action, err = tui.SelectInstance(role); err != nil {
+				if instanceId, action, err = tui.SelectInstance(role, searchTerm); err != nil {
 					ExitWithError(19, "failed to pick an instance", err)
 				} else if action == "back" {
 					goBack()
@@ -224,5 +259,6 @@ func init() {
 	syncCmd.Flags().StringVarP(&instanceId, "instance-id", "i", instanceId, "EC2 instance ID")
 	syncCmd.Flags().Uint16VarP(&rsyncPort, "rsync-port", "P", rsyncPort, "rsync port")
 	syncCmd.Flags().Uint16VarP(&localPort, "local-port", "p", localPort, "local port")
+	syncCmd.Flags().BoolVarP(&lastUsed, "last-used", "l", lastUsed, "select last used credentials")
 	syncCmd.Flags().BoolVarP(&selectCachedFirst, "cached", "c", selectCachedFirst, "select from cached credentials")
 }

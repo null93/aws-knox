@@ -18,6 +18,7 @@ var (
 	debug             bool   = false
 	selectCachedFirst bool   = false
 	connectUid        uint32 = 0
+	lastUsed          bool   = false
 	sessionName       string
 	accountId         string
 	roleName          string
