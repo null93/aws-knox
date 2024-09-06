@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"atomicgo.dev/keyboard/keys"
@@ -93,7 +94,7 @@ func SelectSession(sessions credentials.Sessions) (string, string, error) {
 	return selection.Value.(string), "", nil
 }
 
-func SelectAccount(session *credentials.Session) (string, string, error) {
+func SelectAccount(session *credentials.Session, accountAliases map[string]string) (string, string, error) {
 	accountIds, err := session.GetAccounts()
 	if err != nil {
 		return "", "", err
@@ -102,10 +103,16 @@ func SelectAccount(session *credentials.Session) (string, string, error) {
 	p.WithMaxHeight(MaxItemsToShow)
 	p.WithEmptyMessage("No Accounts Found")
 	p.WithTitle("Pick Account")
-	p.WithHeaders("Account ID", "Name", "Email")
+	p.WithHeaders("Account ID", "Alias/Name", "Email")
 	p.AddAction(keys.Esc, "esc", "go back")
 	for _, account := range accountIds {
-		p.AddOption(account.Id, account.Id, account.Name, account.Email)
+		name := account.Name
+		if val, ok := accountAliases[account.Id]; ok {
+			if strings.TrimSpace(val) != "" {
+				name = val
+			}
+		}
+		p.AddOption(account.Id, account.Id, name, account.Email)
 	}
 	selection, firedKeyCode := p.Pick()
 	if firedKeyCode != nil && *firedKeyCode == keys.Esc {
@@ -166,7 +173,7 @@ func SelectInstance(role *credentials.Role) (string, string, error) {
 	return selection.Value.(string), "", nil
 }
 
-func SelectRolesCredentials() (*credentials.Role, string, error) {
+func SelectRolesCredentials(accountAliases map[string]string) (*credentials.Role, string, error) {
 	now := time.Now()
 	roles, err := credentials.GetSavedRolesWithCredentials()
 	if err != nil {
@@ -176,7 +183,7 @@ func SelectRolesCredentials() (*credentials.Role, string, error) {
 	p.WithMaxHeight(MaxItemsToShow)
 	p.WithEmptyMessage("No Role Credentials Found")
 	p.WithTitle("Pick Role Credentials")
-	p.WithHeaders("SSO Session", "Region", "Account ID", "Role Name", "Expires In")
+	p.WithHeaders("SSO Session", "Region", "Account ID", "Alias", "Role Name", "Expires In")
 	p.AddAction(keys.Tab, "tab", "pick session")
 	p.AddAction(keys.Delete, "del", "delete")
 	for _, role := range roles {
@@ -184,7 +191,13 @@ func SelectRolesCredentials() (*credentials.Role, string, error) {
 		if role.Credentials != nil && !role.Credentials.IsExpired() {
 			expires = fmt.Sprintf("%.f mins", role.Credentials.Expiration.Sub(now).Minutes())
 		}
-		p.AddOption(role, role.SessionName, role.Region, role.AccountId, role.Name, expires)
+		alias := "-"
+		if val, ok := accountAliases[role.AccountId]; ok {
+			if strings.TrimSpace(val) != "" {
+				alias = val
+			}
+		}
+		p.AddOption(role, role.SessionName, role.Region, role.AccountId, alias, role.Name, expires)
 	}
 	selection, firedKeyCode := p.Pick()
 	if firedKeyCode != nil && *firedKeyCode == keys.Tab {

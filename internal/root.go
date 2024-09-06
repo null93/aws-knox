@@ -22,6 +22,7 @@ var (
 	accountId         string
 	roleName          string
 	instanceId        string
+	accountAliases    map[string]string
 )
 
 const (
@@ -90,7 +91,7 @@ func SelectRoleCredentialsStartingFromSession() (string, *credentials.Role) {
 		}
 	}
 	if accountId == "" {
-		if accountId, action, err = tui.SelectAccount(session); err != nil {
+		if accountId, action, err = tui.SelectAccount(session, accountAliases); err != nil {
 			ExitWithError(5, "failed to pick an account id", err)
 		} else if action != "" {
 			return action, nil
@@ -129,7 +130,7 @@ func SelectRoleCredentialsStartingFromCache() (string, *credentials.Role) {
 	var sessions credentials.Sessions
 	var session *credentials.Session
 	var role *credentials.Role
-	if role, action, err = tui.SelectRolesCredentials(); err != nil {
+	if role, action, err = tui.SelectRolesCredentials(accountAliases); err != nil {
 		ExitWithError(12, "failed to cached role credentials", err)
 	} else if action != "" {
 		return action, role
@@ -170,11 +171,13 @@ func setupConfigFile() {
 	viper.SetDefault("default_connect_uid", uint32(0))
 	viper.SetDefault("select_cached_first", false)
 	viper.SetDefault("max_items_to_show", 10)
+	viper.SetDefault("account_aliases", map[string]string{})
 	viper.SafeWriteConfig()
 	viper.ReadInConfig()
 	tui.MaxItemsToShow = viper.GetInt("max_items_to_show")
 	selectCachedFirst = viper.GetBool("select_cached_first")
 	connectUid = viper.GetUint32("default_connect_uid")
+	accountAliases = viper.GetStringMapString("account_aliases")
 }
 
 func init() {
