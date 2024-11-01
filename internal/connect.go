@@ -8,6 +8,8 @@ import (
 
 	"github.com/null93/aws-knox/sdk/credentials"
 	"github.com/null93/aws-knox/sdk/tui"
+	"github.com/null93/aws-knox/pkg/color"
+	. "github.com/null93/aws-knox/sdk/style"
 	"github.com/spf13/cobra"
 )
 
@@ -83,6 +85,17 @@ var connectCmd = &cobra.Command{
 					continue
 				}
 			}
+
+			yellow := color.ToForeground(YellowColor).Decorator()
+			gray := color.ToForeground(LightGrayColor).Decorator()
+			title := TitleStyle.Decorator()
+			DefaultStyle.Printfln("")
+			DefaultStyle.Printfln("%s %s", title("SSO Session: "), gray(role.SessionName))
+			DefaultStyle.Printfln("%s %s", title("Region:      "), gray(role.Region))
+			DefaultStyle.Printfln("%s %s", title("Account ID:  "), gray(role.AccountId))
+			DefaultStyle.Printfln("%s %s", title("Role Name:   "), gray(role.Name))
+			DefaultStyle.Printfln("%s %s", title("Instance ID: "), yellow(instanceId))
+
 			details, err := role.StartSession(instanceId, connectUid)
 			if err != nil {
 				ExitWithError(20, "failed to start ssm session", err)
