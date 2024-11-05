@@ -19,6 +19,7 @@ var connectCmd = &cobra.Command{
 	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		searchTerm := ""
+		currentSelector := "instance"
 		if len(args) > 0 {
 			searchTerm = args[0]
 		}
@@ -81,10 +82,26 @@ var connectCmd = &cobra.Command{
 				region = role.Region
 			}
 			if instanceId == "" {
-				if instanceId, action, err = tui.SelectInstance(role, region, searchTerm); err != nil {
-					ExitWithError(19, "failed to pick an instance", err)
-				} else if action == "back" {
-					goBack()
+				if currentSelector == "instance" {
+					if instanceId, action, err = tui.SelectInstance(role, region, searchTerm); err != nil {
+						ExitWithError(19, "failed to pick an instance", err)
+					} else if action == "back" {
+						goBack()
+						continue
+					} else if action == "pick-region" {
+						currentSelector = "region"
+						continue
+					}
+				} else {
+					pickedRegion := ""
+					if pickedRegion, action, err = tui.SelectRegion(region); err != nil {
+						ExitWithError(20, "failed to pick a region", err)
+					} else if action == "back" {
+						currentSelector = "instance"
+						continue
+					}
+					currentSelector = "instance"
+					region = pickedRegion
 					continue
 				}
 			}

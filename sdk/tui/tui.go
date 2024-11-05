@@ -157,13 +157,64 @@ func SelectInstance(role *credentials.Role, region, initialFilter string) (strin
 	p := picker.NewPicker()
 	p.WithMaxHeight(MaxItemsToShow)
 	p.WithEmptyMessage("No Instances Found")
-	p.WithTitle("Pick EC2 Instance")
+	p.WithTitle(fmt.Sprintf("Pick EC2 Instance (%s)", region))
 	p.WithHeaders("Instance ID", "Instance Type", "Private IP", "Public IP", "Name")
 	p.AddAction(keys.Esc, "esc", "go back")
+	p.AddAction(keys.F1, "f1", "pick region")
 	for _, instance := range instances {
 		p.AddOption(instance.Id, instance.Id, instance.InstanceType, instance.PrivateIpAddress, instance.PublicIpAddress, instance.Name)
 	}
 	selection, firedKeyCode := p.Pick(initialFilter)
+	if firedKeyCode != nil && *firedKeyCode == keys.Esc {
+		return "", "back", nil
+	}
+	if firedKeyCode != nil && *firedKeyCode == keys.F1 {
+		return "", "pick-region", nil
+	}
+	if selection == nil {
+		return "", "", ErrNotPickedInstance
+	}
+	return selection.Value.(string), "", nil
+}
+
+func SelectRegion(initialFilter string) (string, string, error) {
+	regions := [][]string{
+		{ "us-east-1", "US East (N. Virginia)" },
+		{ "us-east-2", "US East (Ohio)" },
+		{ "us-west-1", "US West (N. California)" },
+		{ "us-west-2", "US West (Oregon)" },
+		{ "af-south-1", "Africa (Cape Town)" },
+		{ "ap-east-1", "Asia Pacific (Hong Kong)" },
+		{ "ap-south-1", "Asia Pacific (Mumbai)" },
+		{ "ap-southeast-1", "Asia Pacific (Singapore)" },
+		{ "ap-southeast-2", "Asia Pacific (Sydney)" },
+		{ "ap-northeast-1", "Asia Pacific (Tokyo)" },
+		{ "ap-northeast-2", "Asia Pacific (Seoul)" },
+		{ "ca-central-1", "Canada (Central)" },
+		{ "eu-central-1", "EU (Frankfurt)" },
+		{ "eu-west-1", "EU (Ireland)" },
+		{ "eu-west-2", "EU (London)" },
+		{ "eu-south-1", "EU (Milan)" },
+		{ "eu-west-3", "EU (Paris)" },
+		{ "eu-north-1", "EU (Stockholm)" },
+		{ "me-south-1", "Middle East (Bahrain)" },
+		{ "sa-east-1", "South America (Sao Paulo)" },
+		{ "ap-northeast-3", "Asia Pacific (Osaka-Local)" },
+		{ "us-gov-west-1", "AWS GovCloud (US-West)" },
+		{ "cn-northwest-1", "China (Ningxia)" },
+		{ "cn-north-1", "China (Beijing)" },
+		{ "us-gov-east-1", "AWS GovCloud (US-East)" },
+	}
+	p := picker.NewPicker()
+	p.WithMaxHeight(MaxItemsToShow)
+	p.WithEmptyMessage("No Regions Found")
+	p.WithTitle("Pick Region")
+	p.WithHeaders("Region", "Name")
+	p.AddAction(keys.Esc, "esc", "go back")
+	for _, regionArray := range regions {
+		p.AddOption(regionArray [0], regionArray [0], regionArray [1])
+	}
+	selection, firedKeyCode := p.Pick("")
 	if firedKeyCode != nil && *firedKeyCode == keys.Esc {
 		return "", "back", nil
 	}
