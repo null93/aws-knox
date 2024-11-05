@@ -6,10 +6,10 @@ import (
 	"os/exec"
 	"syscall"
 
-	"github.com/null93/aws-knox/sdk/credentials"
-	"github.com/null93/aws-knox/sdk/tui"
 	"github.com/null93/aws-knox/pkg/color"
+	"github.com/null93/aws-knox/sdk/credentials"
 	. "github.com/null93/aws-knox/sdk/style"
+	"github.com/null93/aws-knox/sdk/tui"
 	"github.com/spf13/cobra"
 )
 
@@ -77,8 +77,11 @@ var connectCmd = &cobra.Command{
 					continue
 				}
 			}
+			if region == "" {
+				region = role.Region
+			}
 			if instanceId == "" {
-				if instanceId, action, err = tui.SelectInstance(role, searchTerm); err != nil {
+				if instanceId, action, err = tui.SelectInstance(role, region, searchTerm); err != nil {
 					ExitWithError(19, "failed to pick an instance", err)
 				} else if action == "back" {
 					goBack()
@@ -91,7 +94,7 @@ var connectCmd = &cobra.Command{
 			title := TitleStyle.Decorator()
 			DefaultStyle.Printfln("")
 			DefaultStyle.Printfln("%s %s", title("SSO Session: "), gray(role.SessionName))
-			DefaultStyle.Printfln("%s %s", title("Region:      "), gray(role.Region))
+			DefaultStyle.Printfln("%s %s", title("Region:      "), gray(region))
 			DefaultStyle.Printfln("%s %s", title("Account ID:  "), gray(role.AccountId))
 			DefaultStyle.Printfln("%s %s", title("Role Name:   "), gray(role.Name))
 			DefaultStyle.Printfln("%s %s", title("Instance ID: "), yellow(instanceId))
@@ -106,11 +109,11 @@ var connectCmd = &cobra.Command{
 			command := exec.Command(
 				binaryPath,
 				fmt.Sprintf(`{"SessionId": "%s", "TokenValue": "%s", "StreamUrl": "%s"}`, *details.SessionId, *details.TokenValue, *details.StreamUrl),
-				role.Region,
+				region,
 				"StartSession",
 				"", // No Profile
 				fmt.Sprintf(`{"Target": "%s"}`, instanceId),
-				fmt.Sprintf("https://ssm.%s.amazonaws.com", role.Region),
+				fmt.Sprintf("https://ssm.%s.amazonaws.com", region),
 			)
 			command.Stdin = os.Stdin
 			command.Stdout = os.Stdout
@@ -131,6 +134,7 @@ func init() {
 	connectCmd.Flags().StringVarP(&accountId, "account-id", "a", accountId, "AWS account ID")
 	connectCmd.Flags().StringVarP(&roleName, "role-name", "r", roleName, "AWS role name")
 	connectCmd.Flags().StringVarP(&instanceId, "instance-id", "i", instanceId, "EC2 instance ID")
+	connectCmd.Flags().StringVar(&region, "region", region, "Region for quering instances")
 	connectCmd.Flags().BoolVarP(&selectCachedFirst, "cached", "c", selectCachedFirst, "select from cached credentials")
 	connectCmd.Flags().BoolVarP(&lastUsed, "last-used", "l", lastUsed, "select last used credentials")
 	connectCmd.Flags().Uint32VarP(&connectUid, "uid", "u", connectUid, "UID on instance to 'su' to")

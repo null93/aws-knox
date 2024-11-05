@@ -113,7 +113,7 @@ func (r Roles) FindByName(name string) *Role {
 	return nil
 }
 
-func (r *Role) GetManagedInstances() (Instances, error) {
+func (r *Role) GetManagedInstances(region string) (Instances, error) {
 	instances := Instances{}
 	if r.Credentials == nil {
 		return instances, ErrorRoleCredentialsNil
@@ -123,7 +123,7 @@ func (r *Role) GetManagedInstances() (Instances, error) {
 		r.Credentials.SecretAccessKey,
 		r.Credentials.SessionToken,
 	)
-	options := ec2.Options{Region: r.Region, Credentials: staticProvider}
+	options := ec2.Options{Region: region, Credentials: staticProvider}
 	client := ec2.New(options)
 	params := ec2.DescribeInstancesInput{
 		Filters: []ec2types.Filter{

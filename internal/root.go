@@ -23,6 +23,7 @@ var (
 	accountId         string
 	roleName          string
 	instanceId        string
+	region            string
 	accountAliases    map[string]string
 )
 

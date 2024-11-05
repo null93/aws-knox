@@ -8,7 +8,9 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/null93/aws-knox/pkg/color"
 	"github.com/null93/aws-knox/sdk/credentials"
+	. "github.com/null93/aws-knox/sdk/style"
 	"github.com/null93/aws-knox/sdk/tui"
 	"github.com/spf13/cobra"
 )
@@ -48,11 +50,11 @@ func rsyncInit(role *credentials.Role, instanceId string) {
 	command := exec.Command(
 		binaryPath,
 		fmt.Sprintf(`{"SessionId": "%s", "TokenValue": "%s", "StreamUrl": "%s"}`, *details.SessionId, *details.TokenValue, *details.StreamUrl),
-		role.Region,
+		region,
 		"StartSession",
 		"", // No Profile
 		fmt.Sprintf(`{"Target": "%s"}`, instanceId),
-		fmt.Sprintf("https://ssm.%s.amazonaws.com", role.Region),
+		fmt.Sprintf("https://ssm.%s.amazonaws.com", region),
 	)
 	command.Stdin = os.Stdin
 	command.SysProcAttr = &syscall.SysProcAttr{Setpgid: true, Foreground: true}
@@ -85,11 +87,11 @@ func rsyncStart(role *credentials.Role, instanceId string) {
 	command := exec.Command(
 		binaryPath,
 		fmt.Sprintf(`{"SessionId": "%s", "TokenValue": "%s", "StreamUrl": "%s"}`, *details.SessionId, *details.TokenValue, *details.StreamUrl),
-		role.Region,
+		region,
 		"StartSession",
 		"", // No Profile
 		fmt.Sprintf(`{"Target": "%s"}`, instanceId),
-		fmt.Sprintf("https://ssm.%s.amazonaws.com", role.Region),
+		fmt.Sprintf("https://ssm.%s.amazonaws.com", region),
 	)
 	command.Stdin = os.Stdin
 	command.Stdout = nil
@@ -117,11 +119,11 @@ func rsyncClean(role *credentials.Role, instanceId string) {
 	command := exec.Command(
 		binaryPath,
 		fmt.Sprintf(`{"SessionId": "%s", "TokenValue": "%s", "StreamUrl": "%s"}`, *details.SessionId, *details.TokenValue, *details.StreamUrl),
-		role.Region,
+		region,
 		"StartSession",
 		"", // No Profile
 		fmt.Sprintf(`{"Target": "%s"}`, instanceId),
-		fmt.Sprintf("https://ssm.%s.amazonaws.com", role.Region),
+		fmt.Sprintf("https://ssm.%s.amazonaws.com", region),
 	)
 	command.Stdin = os.Stdin
 	command.SysProcAttr = &syscall.SysProcAttr{Setpgid: true, Foreground: true}
@@ -146,11 +148,11 @@ func rsyncPortForward(role *credentials.Role, instanceId string) {
 	command := exec.Command(
 		binaryPath,
 		fmt.Sprintf(`{"SessionId": "%s", "TokenValue": "%s", "StreamUrl": "%s"}`, *details.SessionId, *details.TokenValue, *details.StreamUrl),
-		role.Region,
+		region,
 		"StartSession",
 		"", // No Profile
 		fmt.Sprintf(`{"Target": "%s"}`, instanceId),
-		fmt.Sprintf("https://ssm.%s.amazonaws.com", role.Region),
+		fmt.Sprintf("https://ssm.%s.amazonaws.com", region),
 	)
 	command.Stdin = os.Stdin
 	command.Stdout = nil
@@ -224,17 +226,30 @@ var syncCmd = &cobra.Command{
 					continue
 				}
 			}
+			if region == "" {
+				region = role.Region
+			}
 			if instanceId == "" {
-				if instanceId, action, err = tui.SelectInstance(role, searchTerm); err != nil {
+				if instanceId, action, err = tui.SelectInstance(role, region, searchTerm); err != nil {
 					ExitWithError(19, "failed to pick an instance", err)
 				} else if action == "back" {
 					goBack()
 					continue
 				}
 			}
-			fmt.Println("Remote Destination:  /root/knox-sync")
-			fmt.Printf("Example Command:     rsync -P ./dump.sql ./release.tar.gz rsync://127.0.0.1:%d/sync\n", localPort)
-			fmt.Println()
+
+			yellow := color.ToForeground(YellowColor).Decorator()
+			gray := color.ToForeground(LightGrayColor).Decorator()
+			title := TitleStyle.Decorator()
+			DefaultStyle.Printfln("")
+			DefaultStyle.Printfln("%s %s", title("SSO Session:        "), gray(role.SessionName))
+			DefaultStyle.Printfln("%s %s", title("Region:             "), gray(region))
+			DefaultStyle.Printfln("%s %s", title("Account ID:         "), gray(role.AccountId))
+			DefaultStyle.Printfln("%s %s", title("Role Name:          "), gray(role.Name))
+			DefaultStyle.Printfln("%s %s", title("Instance ID:        "), gray(instanceId))
+			DefaultStyle.Printfln("%s %s", title("Remote Destination: "), gray("/root/knox-sync"))
+			DefaultStyle.Printfln("%s %s", title("Example Command:    "), yellow("rsync -P ./dump.sql ./release.tar.gz rsync://127.0.0.1:%d/sync\n", localPort))
+
 			defer rsyncClean(role, instanceId)
 			defer func() {
 				fmt.Println("\nCleaning up...")
@@ -257,6 +272,7 @@ func init() {
 	syncCmd.Flags().StringVarP(&accountId, "account-id", "a", accountId, "AWS account ID")
 	syncCmd.Flags().StringVarP(&roleName, "role-name", "r", roleName, "AWS role name")
 	syncCmd.Flags().StringVarP(&instanceId, "instance-id", "i", instanceId, "EC2 instance ID")
+	syncCmd.Flags().StringVar(&region, "region", region, "Region for quering instances")
 	syncCmd.Flags().Uint16VarP(&rsyncPort, "rsync-port", "P", rsyncPort, "rsync port")
 	syncCmd.Flags().Uint16VarP(&localPort, "local-port", "p", localPort, "local port")
 	syncCmd.Flags().BoolVarP(&lastUsed, "last-used", "l", lastUsed, "select last used credentials")

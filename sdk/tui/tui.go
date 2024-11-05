@@ -149,8 +149,8 @@ func SelectRole(roles credentials.Roles) (string, string, error) {
 	return selection.Value.(string), "", nil
 }
 
-func SelectInstance(role *credentials.Role, initialFilter string) (string, string, error) {
-	instances, err := role.GetManagedInstances()
+func SelectInstance(role *credentials.Role, region, initialFilter string) (string, string, error) {
+	instances, err := role.GetManagedInstances(region)
 	if err != nil {
 		return "", "", err
 	}
