@@ -15,7 +15,7 @@ var selectCmd = &cobra.Command{
 		var role *credentials.Role
 		var action string
 		for {
-			if !selectCachedFirst {
+			if !selectCachedFirst || ( sessionName != "" && accountId != "" && roleName != "" ) {
 				action, role = SelectRoleCredentialsStartingFromSession()
 			} else {
 				action, role = SelectRoleCredentialsStartingFromCache()
@@ -50,5 +50,4 @@ func init() {
 	selectCmd.Flags().StringVarP(&sessionName, "sso-session", "s", sessionName, "SSO session name")
 	selectCmd.Flags().StringVarP(&accountId, "account-id", "a", accountId, "AWS account ID")
 	selectCmd.Flags().StringVarP(&roleName, "role-name", "r", roleName, "AWS role name")
-	selectCmd.Flags().BoolVarP(&selectCachedFirst, "cached", "c", selectCachedFirst, "select from cached credentials")
 }

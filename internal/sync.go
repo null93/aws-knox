@@ -207,7 +207,7 @@ var syncCmd = &cobra.Command{
 		}
 		for {
 			if role == nil {
-				if !selectCachedFirst {
+				if !selectCachedFirst || ( sessionName != "" && accountId != "" && roleName != "" ) {
 					action, role = SelectRoleCredentialsStartingFromSession()
 				} else {
 					action, role = SelectRoleCredentialsStartingFromCache()
@@ -293,5 +293,4 @@ func init() {
 	syncCmd.Flags().Uint16VarP(&rsyncPort, "rsync-port", "P", rsyncPort, "rsync port")
 	syncCmd.Flags().Uint16VarP(&localPort, "local-port", "p", localPort, "local port")
 	syncCmd.Flags().BoolVarP(&lastUsed, "last-used", "l", lastUsed, "select last used credentials")
-	syncCmd.Flags().BoolVarP(&selectCachedFirst, "cached", "c", selectCachedFirst, "select from cached credentials")
 }

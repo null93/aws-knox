@@ -58,7 +58,7 @@ var connectCmd = &cobra.Command{
 		}
 		for {
 			if role == nil {
-				if !selectCachedFirst {
+				if !selectCachedFirst || ( sessionName != "" && accountId != "" && roleName != "" ) {
 					action, role = SelectRoleCredentialsStartingFromSession()
 				} else {
 					action, role = SelectRoleCredentialsStartingFromCache()
@@ -152,7 +152,6 @@ func init() {
 	connectCmd.Flags().StringVarP(&roleName, "role-name", "r", roleName, "AWS role name")
 	connectCmd.Flags().StringVarP(&instanceId, "instance-id", "i", instanceId, "EC2 instance ID")
 	connectCmd.Flags().StringVar(&region, "region", region, "Region for quering instances")
-	connectCmd.Flags().BoolVarP(&selectCachedFirst, "cached", "c", selectCachedFirst, "select from cached credentials")
 	connectCmd.Flags().BoolVarP(&lastUsed, "last-used", "l", lastUsed, "select last used credentials")
 	connectCmd.Flags().Uint32VarP(&connectUid, "uid", "u", connectUid, "UID on instance to 'su' to")
 }
