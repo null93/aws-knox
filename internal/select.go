@@ -15,7 +15,7 @@ var selectCmd = &cobra.Command{
 		var role *credentials.Role
 		var action string
 		for {
-			if !selectCachedFirst || ( sessionName != "" && accountId != "" && roleName != "" ) {
+			if !selectCachedFirst || (sessionName != "" && accountId != "" && roleName != "") {
 				action, role = SelectRoleCredentialsStartingFromSession()
 			} else {
 				action, role = SelectRoleCredentialsStartingFromCache()

@@ -207,7 +207,7 @@ var syncCmd = &cobra.Command{
 		}
 		for {
 			if role == nil {
-				if !selectCachedFirst || ( sessionName != "" && accountId != "" && roleName != "" ) {
+				if !selectCachedFirst || (sessionName != "" && accountId != "" && roleName != "") {
 					action, role = SelectRoleCredentialsStartingFromSession()
 				} else {
 					action, role = SelectRoleCredentialsStartingFromCache()
