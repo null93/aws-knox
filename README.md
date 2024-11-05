@@ -146,3 +146,4 @@ The Knox config file is located at `~/.aws/knox/config.yaml`. Below are the conf
 | `default_connect_uid` | `0`     | Default user ID for SSM sessions initiated with the `knox connect` command.                            |
 | `max_items_to_show`   | `10`    | Maximum number of items to display when listing profiles or options.                                   |
 | `select_cached_first` | `false` | When selecting credentials, specifies whether to default to showing the cached role credentials first. |
+| `account_aliases`     | `{}`    | Account aliases for AWS accounts. Key is the account ID, and value is the account alias.               |
