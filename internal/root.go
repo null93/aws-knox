@@ -63,6 +63,8 @@ func ExitWithError(code int, message string, err error) {
 	fmt.Printf("Error: %s\n", message)
 	if err != nil && debug {
 		fmt.Printf("Debug: %s\n", err.Error())
+	} else {
+		fmt.Printf("Info:  run with --debug flag for more info\n")
 	}
 	os.Exit(code)
 }
