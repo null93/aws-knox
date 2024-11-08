@@ -156,6 +156,14 @@ func cutOff(s string, n int) string {
 	return s
 }
 
+func cutOffInMiddle(s string, n int) string {
+	l := len(s)
+	if l > n {
+		return s[:n/2] + "…" + s[l-(n/2):]
+	}
+	return s
+}
+
 func SelectInstance(role *credentials.Role, region, initialFilter string, instanceColTags []string) (string, string, error) {
 	instances, err := role.GetManagedInstances(region)
 	if err != nil {
@@ -186,7 +194,7 @@ func SelectInstance(role *credentials.Role, region, initialFilter string, instan
 			default:
 				value = instance.Tags[tag]
 			}
-			value = cutOff(value, 36)
+			value = cutOffInMiddle(value, 36)
 			values = append(values, value)
 		}
 		p.AddOption(instance.Id, values...)
