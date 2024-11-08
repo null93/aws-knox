@@ -149,20 +149,47 @@ func SelectRole(roles credentials.Roles) (string, string, error) {
 	return selection.Value.(string), "", nil
 }
 
-func SelectInstance(role *credentials.Role, region, initialFilter string) (string, string, error) {
+func cutOff(s string, n int) string {
+	if len(s) > n {
+		return s[:n-1] + "…"
+	}
+	return s
+}
+
+func SelectInstance(role *credentials.Role, region, initialFilter string, instanceColTags []string) (string, string, error) {
 	instances, err := role.GetManagedInstances(region)
 	if err != nil {
 		return "", "", err
+	}
+	cols := []string{"Instance ID"}
+	for _, tag := range instanceColTags {
+		cols = append(cols, tag)
 	}
 	p := picker.NewPicker()
 	p.WithMaxHeight(MaxItemsToShow)
 	p.WithEmptyMessage("No Instances Found")
 	p.WithTitle(fmt.Sprintf("Pick EC2 Instance (%s)", region))
-	p.WithHeaders("Instance ID", "Instance Type", "Private IP", "Public IP", "Name")
+	p.WithHeaders(cols...)
 	p.AddAction(keys.Esc, "esc", "go back")
 	p.AddAction(keys.F1, "f1", "pick region")
 	for _, instance := range instances {
-		p.AddOption(instance.Id, instance.Id, instance.InstanceType, instance.PrivateIpAddress, instance.PublicIpAddress, instance.Name)
+		values := []string{instance.Id}
+		for _, tag := range instanceColTags {
+			value := "-"
+			switch tag {
+			case "Instance Type":
+				value = instance.InstanceType
+			case "Private IP":
+				value = instance.PrivateIpAddress
+			case "Public IP":
+				value = instance.PublicIpAddress
+			default:
+				value = instance.Tags[tag]
+			}
+			value = cutOff(value, 36)
+			values = append(values, value)
+		}
+		p.AddOption(instance.Id, values...)
 	}
 	selection, firedKeyCode := p.Pick(initialFilter)
 	if firedKeyCode != nil && *firedKeyCode == keys.Esc {

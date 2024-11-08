@@ -29,10 +29,10 @@ type Instances []Instance
 
 type Instance struct {
 	Id               string
-	Name             string
 	InstanceType     string
 	PrivateIpAddress string
 	PublicIpAddress  string
+	Tags             map[string]string
 }
 
 func (r *Role) StartSession(instanceId string, defaultUid uint32) (*ssm.StartSessionOutput, error) {
@@ -141,7 +141,6 @@ func (r *Role) GetManagedInstances(region string) (Instances, error) {
 		}
 		for _, info := range page.Reservations {
 			for _, instance := range info.Instances {
-				name := "-"
 				privateId := "-"
 				publicId := "-"
 				if instance.PrivateIpAddress != nil {
@@ -150,17 +149,18 @@ func (r *Role) GetManagedInstances(region string) (Instances, error) {
 				if instance.PublicIpAddress != nil {
 					publicId = aws.ToString(instance.PublicIpAddress)
 				}
+				tags := map[string]string{}
 				for _, tag := range instance.Tags {
-					if aws.ToString(tag.Key) == "Name" {
-						name = aws.ToString(tag.Value)
-					}
+					key := aws.ToString(tag.Key)
+					value := aws.ToString(tag.Value)
+					tags[key] = value
 				}
 				instance := Instance{
 					Id:               aws.ToString(instance.InstanceId),
-					Name:             name,
 					InstanceType:     string(instance.InstanceType),
 					PrivateIpAddress: privateId,
 					PublicIpAddress:  publicId,
+					Tags:             tags,
 				}
 				instances = append(instances, instance)
 			}

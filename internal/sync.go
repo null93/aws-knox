@@ -232,7 +232,7 @@ var syncCmd = &cobra.Command{
 			}
 			if instanceId == "" {
 				if currentSelector == "instance" {
-					if instanceId, action, err = tui.SelectInstance(role, region, searchTerm); err != nil {
+					if instanceId, action, err = tui.SelectInstance(role, region, searchTerm, instanceColTags); err != nil {
 						ExitWithError(19, "failed to pick an instance", err)
 					} else if action == "back" {
 						goBack()

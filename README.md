@@ -141,9 +141,32 @@ sso_start_url = https://d-0000000000.awsapps.com/start
 
 The Knox config file is located at `~/.aws/knox/config.yaml`. Below are the configuration options available:
 
-| Option                | Default | Description                                                                                            |
-|-----------------------|---------|--------------------------------------------------------------------------------------------------------|
-| `default_connect_uid` | `0`     | Default user ID for SSM sessions initiated with the `knox connect` command.                            |
-| `max_items_to_show`   | `10`    | Maximum number of items to display when listing profiles or options.                                   |
-| `select_cached_first` | `false` | When selecting credentials, specifies whether to default to showing the cached role credentials first. |
-| `account_aliases`     | `{}`    | Account aliases for AWS accounts. Key is the account ID, and value is the account alias.               |
+### `default_connect_uid`
+
+Default value is `0` (root).
+
+Default user ID for SSM sessions initiated with the `knox connect` command.
+
+### `max_items_to_show`
+
+Default value is `10`.
+
+Maximum number of items to display when listing profiles or options.
+
+### `select_cached_first`
+
+Default value is `false`.
+
+When selecting credentials, specifies whether to default to showing the cached role credentials first.
+
+### `account_aliases`
+
+Default value is `{}`.
+
+Account aliases for AWS accounts. Key is the account ID, and value is the account alias.
+
+### `instance_col_tags`
+
+Default value is `["Instance Type", "Private IP", "Public IP", "Name"]`.
+
+Specify "Instance Type", "Private IP", or "Public IP" to display when selecting an instance. All other values are extracted from tags.

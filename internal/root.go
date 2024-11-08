@@ -25,6 +25,7 @@ var (
 	instanceId        string
 	region            string
 	accountAliases    map[string]string
+	instanceColTags   []string
 )
 
 const (
@@ -176,12 +177,14 @@ func setupConfigFile() {
 	viper.SetDefault("select_cached_first", false)
 	viper.SetDefault("max_items_to_show", 10)
 	viper.SetDefault("account_aliases", map[string]string{})
+	viper.SetDefault("instance_col_tags", []string{"Instance Type", "Private IP", "Public IP", "Name"})
 	viper.SafeWriteConfig()
 	viper.ReadInConfig()
 	tui.MaxItemsToShow = viper.GetInt("max_items_to_show")
 	selectCachedFirst = viper.GetBool("select_cached_first")
 	connectUid = viper.GetUint32("default_connect_uid")
 	accountAliases = viper.GetStringMapString("account_aliases")
+	instanceColTags = viper.GetStringSlice("instance_col_tags")
 }
 
 func init() {
