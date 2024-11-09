@@ -42,7 +42,20 @@ func toggleView() {
 	selectCachedFirst = !selectCachedFirst
 }
 
-func goBack() {
+func goBack(role **credentials.Role) {
+	if role == nil && lastUsed {
+		*role = nil
+		lastUsed = false
+		return
+	}
+	if role != nil {
+		*role = nil
+		return
+	}
+	if instanceId != "" {
+		instanceId = ""
+		return
+	}
 	if instanceId != "" {
 		instanceId = ""
 		return

@@ -25,7 +25,7 @@ var selectCmd = &cobra.Command{
 				continue
 			}
 			if action == "back" {
-				goBack()
+				goBack(&role)
 				continue
 			}
 			if action == "delete" {

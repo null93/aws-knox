@@ -68,7 +68,7 @@ var connectCmd = &cobra.Command{
 					continue
 				}
 				if action == "back" {
-					goBack()
+					goBack(&role)
 					continue
 				}
 				if action == "delete" {
@@ -86,7 +86,7 @@ var connectCmd = &cobra.Command{
 					if instanceId, action, err = tui.SelectInstance(role, region, searchTerm, instanceColTags); err != nil {
 						ExitWithError(19, "failed to pick an instance", err)
 					} else if action == "back" {
-						goBack()
+						goBack(&role)
 						continue
 					} else if action == "pick-region" {
 						currentSelector = "region"
