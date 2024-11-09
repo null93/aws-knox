@@ -89,6 +89,8 @@ var connectCmd = &cobra.Command{
 					} else if action == "back" {
 						goBack(&role)
 						continue
+					} else if action == "refresh" {
+						continue
 					} else if action == "pick-region" {
 						currentSelector = "region"
 						continue

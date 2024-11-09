@@ -185,6 +185,7 @@ func SelectInstance(role *credentials.Role, region, initialFilter string, instan
 	p.WithHeaders(cols...)
 	p.AddAction(keys.Esc, "esc", "go back")
 	p.AddAction(keys.F1, "f1", "pick region")
+	p.AddAction(keys.F2, "f2", "refresh")
 	for _, instance := range instances {
 		values := []string{instance.Id}
 		for _, tag := range instanceColTags {
@@ -210,6 +211,9 @@ func SelectInstance(role *credentials.Role, region, initialFilter string, instan
 	}
 	if firedKeyCode != nil && *firedKeyCode == keys.F1 {
 		return "", "pick-region", nil
+	}
+	if firedKeyCode != nil && *firedKeyCode == keys.F2 {
+		return "", "refresh", nil
 	}
 	if selection == nil {
 		return "", "", ErrNotPickedInstance
