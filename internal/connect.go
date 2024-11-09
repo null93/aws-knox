@@ -74,6 +74,7 @@ var connectCmd = &cobra.Command{
 				if action == "delete" {
 					if role != nil && role.Credentials != nil {
 						role.Credentials.DeleteCache(role.SessionName, role.CacheKey())
+						role = nil
 					}
 					continue
 				}

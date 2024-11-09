@@ -43,13 +43,12 @@ func toggleView() {
 }
 
 func goBack(role **credentials.Role) {
-	if role == nil && lastUsed {
-		*role = nil
+	if lastUsed {
 		lastUsed = false
-		return
 	}
-	if role != nil {
+	if *role != nil {
 		*role = nil
+		roleName = ""
 		return
 	}
 	if instanceId != "" {
