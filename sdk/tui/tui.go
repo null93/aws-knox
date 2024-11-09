@@ -15,12 +15,13 @@ import (
 )
 
 var (
-	MaxItemsToShow              int = 10
-	ErrNotPickedSession             = fmt.Errorf("no sso session picked")
-	ErrNotPickedAccount             = fmt.Errorf("no account picked")
-	ErrNotPickedRole                = fmt.Errorf("no role picked")
-	ErrNotPickedInstance            = fmt.Errorf("no instance picked")
-	ErrNotPickedRoleCredentials     = fmt.Errorf("no role credentials picked")
+	MaxItemsToShow              int    = 10
+	FilterStrategy              string = "fuzzy"
+	ErrNotPickedSession         error  = fmt.Errorf("no sso session picked")
+	ErrNotPickedAccount         error  = fmt.Errorf("no account picked")
+	ErrNotPickedRole            error  = fmt.Errorf("no role picked")
+	ErrNotPickedInstance        error  = fmt.Errorf("no instance picked")
+	ErrNotPickedRoleCredentials error  = fmt.Errorf("no role credentials picked")
 )
 
 func ClientLogin(session *credentials.Session) error {
@@ -73,6 +74,7 @@ func SelectSession(sessions credentials.Sessions) (string, string, error) {
 	now := time.Now()
 	p := picker.NewPicker()
 	p.WithMaxHeight(MaxItemsToShow)
+	p.WithFilterStrategy(FilterStrategy)
 	p.WithEmptyMessage("No SSO Sessions Found")
 	p.WithTitle("Pick SSO Session")
 	p.WithHeaders("SSO Session", "Region", "SSO Start URL", "Expires In")
@@ -101,6 +103,7 @@ func SelectAccount(session *credentials.Session, accountAliases map[string]strin
 	}
 	p := picker.NewPicker()
 	p.WithMaxHeight(MaxItemsToShow)
+	p.WithFilterStrategy(FilterStrategy)
 	p.WithEmptyMessage("No Accounts Found")
 	p.WithTitle("Pick Account")
 	p.WithHeaders("Account ID", "Alias/Name", "Email")
@@ -128,6 +131,7 @@ func SelectRole(roles credentials.Roles) (string, string, error) {
 	now := time.Now()
 	p := picker.NewPicker()
 	p.WithMaxHeight(MaxItemsToShow)
+	p.WithFilterStrategy(FilterStrategy)
 	p.WithEmptyMessage("No Roles Found")
 	p.WithTitle("Pick Role")
 	p.WithHeaders("Role Name", "Expires In")
@@ -175,6 +179,7 @@ func SelectInstance(role *credentials.Role, region, initialFilter string, instan
 	}
 	p := picker.NewPicker()
 	p.WithMaxHeight(MaxItemsToShow)
+	p.WithFilterStrategy(FilterStrategy)
 	p.WithEmptyMessage("No Instances Found")
 	p.WithTitle(fmt.Sprintf("Pick EC2 Instance (%s)", region))
 	p.WithHeaders(cols...)
@@ -242,6 +247,7 @@ func SelectRegion(initialFilter string) (string, string, error) {
 	}
 	p := picker.NewPicker()
 	p.WithMaxHeight(MaxItemsToShow)
+	p.WithFilterStrategy(FilterStrategy)
 	p.WithEmptyMessage("No Regions Found")
 	p.WithTitle("Pick Region")
 	p.WithHeaders("Region", "Name")
@@ -267,6 +273,7 @@ func SelectRolesCredentials(accountAliases map[string]string) (*credentials.Role
 	}
 	p := picker.NewPicker()
 	p.WithMaxHeight(MaxItemsToShow)
+	p.WithFilterStrategy(FilterStrategy)
 	p.WithEmptyMessage("No Role Credentials Found")
 	p.WithTitle("Pick Role Credentials")
 	p.WithHeaders("SSO Session", "Region", "Account ID", "Alias", "Role Name", "Expires In")

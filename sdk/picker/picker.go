@@ -1,28 +1,31 @@
 package picker
 
 import (
+	"sort"
 	"strings"
 
 	"atomicgo.dev/keyboard"
 	"atomicgo.dev/keyboard/keys"
+	"github.com/lithammer/fuzzysearch/fuzzy"
 	"github.com/null93/aws-knox/pkg/ansi"
 	"github.com/null93/aws-knox/pkg/color"
 	. "github.com/null93/aws-knox/sdk/style"
 )
 
 type picker struct {
-	actions       []action
-	options       []option
-	filtered      []*option
-	selectedIndex int
-	term          string
-	title         string
-	longestCols   []int
-	emptyMessage  string
-	maxHeight     int
-	windowStart   int
-	windowEnd     int
-	headers       []string
+	actions        []action
+	options        []option
+	filtered       []*option
+	selectedIndex  int
+	term           string
+	filterStrategy string
+	title          string
+	longestCols    []int
+	emptyMessage   string
+	maxHeight      int
+	windowStart    int
+	windowEnd      int
+	headers        []string
 }
 
 type option struct {
@@ -38,20 +41,25 @@ type action struct {
 
 func NewPicker() *picker {
 	p := picker{
-		actions:       []action{},
-		options:       []option{},
-		filtered:      []*option{},
-		selectedIndex: 0,
-		title:         "Please Pick One",
-		term:          "",
-		longestCols:   []int{},
-		emptyMessage:  "Nothing Found",
-		maxHeight:     5,
-		windowStart:   0,
-		windowEnd:     5,
-		headers:       []string{},
+		actions:        []action{},
+		options:        []option{},
+		filtered:       []*option{},
+		selectedIndex:  0,
+		title:          "Please Pick One",
+		term:           "",
+		filterStrategy: "fuzzy",
+		longestCols:    []int{},
+		emptyMessage:   "Nothing Found",
+		maxHeight:      5,
+		windowStart:    0,
+		windowEnd:      5,
+		headers:        []string{},
 	}
 	return &p
+}
+
+func (p *picker) WithFilterStrategy(strategy string) {
+	p.filterStrategy = strategy
 }
 
 func (p *picker) WithMaxHeight(maxHeight int) {
@@ -108,18 +116,41 @@ func (p *picker) filter() {
 	p.selectedIndex = 0
 	p.windowStart = 0
 	p.windowEnd = p.maxHeight
-	for i, option := range p.options {
-		if p.term == "" {
-			p.filtered = append(p.filtered, &p.options[i])
-			continue
-		}
-		for _, col := range option.Columns {
-			if strings.Contains(strings.ToLower(col), strings.ToLower(p.term)) {
+
+	if p.filterStrategy == "fuzzy" {
+		optionsMap := map[string]*option{}
+		fullValues := []string{}
+		for i, option := range p.options {
+			if p.term == "" {
 				p.filtered = append(p.filtered, &p.options[i])
-				break
+				continue
+			}
+			fullValue := strings.Join(option.Columns, " ")
+			fullValues = append(fullValues, fullValue)
+			optionsMap[fullValue] = &p.options[i]
+		}
+		if p.term != "" {
+			ranks := fuzzy.RankFindFold(p.term, fullValues)
+			sort.Sort(ranks)
+			for _, rank := range ranks {
+				p.filtered = append(p.filtered, optionsMap[rank.Target])
+			}
+		}
+	} else {
+		for i, option := range p.options {
+			if p.term == "" {
+				p.filtered = append(p.filtered, &p.options[i])
+				continue
+			}
+			for _, col := range option.Columns {
+				if strings.Contains(strings.ToLower(col), strings.ToLower(p.term)) {
+					p.filtered = append(p.filtered, &p.options[i])
+					break
+				}
 			}
 		}
 	}
+
 	if len(p.filtered) < 1 {
 		p.selectedIndex = -1
 	}
@@ -225,6 +256,9 @@ func (p *picker) Pick(initialFilter string) (*option, *keys.KeyCode) {
 			}
 		}
 		if key.Code == keys.RuneKey || key.Code == keys.Space {
+			if p.term == "" && key.Code == keys.Space {
+				return false, nil
+			}
 			p.term += string(key.Runes)
 			p.filter()
 			p.render()

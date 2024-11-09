@@ -170,3 +170,9 @@ Account aliases for AWS accounts. Key is the account ID, and value is the accoun
 Default value is `["Instance Type", "Private IP", "Public IP", "Name"]`.
 
 Specify "Instance Type", "Private IP", or "Public IP" to display when selecting an instance. All other values are extracted from tags.
+
+### `filter_strategy`
+
+Default value is `"fuzzy"`.
+
+You can specify `"fuzzy"` for fuzzy search. All other values will be treated as `"exact"`.
