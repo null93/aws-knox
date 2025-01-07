@@ -164,15 +164,11 @@ func rsyncPortForward(role *credentials.Role, instanceId string) {
 }
 
 var syncCmd = &cobra.Command{
-	Use:   "sync <instance-search-term>",
+	Use:   "sync [instance-search-term]",
 	Short: "start rsyncd and port forward to it",
-	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		searchTerm := ""
+		searchTerm := strings.Join(args, " ")
 		currentSelector := "instance"
-		if len(args) > 0 {
-			searchTerm = args[0]
-		}
 		var err error
 		var role *credentials.Role
 		var action string

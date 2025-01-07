@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"syscall"
+	"strings"
 
 	"github.com/null93/aws-knox/pkg/color"
 	"github.com/null93/aws-knox/sdk/credentials"
@@ -14,15 +15,11 @@ import (
 )
 
 var connectCmd = &cobra.Command{
-	Use:   "connect <instance-search-term>",
+	Use:   "connect [instance-search-term]",
 	Short: "Connect to an EC2 instance using session-manager-plugin",
-	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		searchTerm := ""
+		searchTerm := strings.Join(args, " ")
 		currentSelector := "instance"
-		if len(args) > 0 {
-			searchTerm = args[0]
-		}
 		var err error
 		var role *credentials.Role
 		var action string
