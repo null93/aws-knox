@@ -177,6 +177,14 @@ func SelectRoleCredentialsStartingFromCache() (string, *credentials.Role) {
 	return "", role
 }
 
+func padAccountNumbers(aliases map[string]string) map[string]string {
+	result := map[string]string{}
+	for account, alias := range aliases {
+		result[fmt.Sprintf("%012s", account)] = alias
+	}
+	return result
+}
+
 func setupConfigFile() {
 	if homeDir, err := os.UserHomeDir(); err == nil {
 		os.MkdirAll(homeDir+"/.aws/knox", os.FileMode(0700))
@@ -197,8 +205,9 @@ func setupConfigFile() {
 	tui.FilterStrategy = viper.GetString("filter_strategy")
 	selectCachedFirst = viper.GetBool("select_cached_first")
 	connectUid = viper.GetUint32("default_connect_uid")
-	accountAliases = viper.GetStringMapString("account_aliases")
+	accountAliases = padAccountNumbers( viper.GetStringMapString("account_aliases") )
 	instanceColTags = viper.GetStringSlice("instance_col_tags")
+
 }
 
 func init() {
