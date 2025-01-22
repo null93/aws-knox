@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"syscall"
 	"strings"
+	"syscall"
 
 	"github.com/null93/aws-knox/pkg/color"
 	"github.com/null93/aws-knox/sdk/credentials"

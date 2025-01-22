@@ -205,7 +205,7 @@ func setupConfigFile() {
 	tui.FilterStrategy = viper.GetString("filter_strategy")
 	selectCachedFirst = viper.GetBool("select_cached_first")
 	connectUid = viper.GetUint32("default_connect_uid")
-	accountAliases = padAccountNumbers( viper.GetStringMapString("account_aliases") )
+	accountAliases = padAccountNumbers(viper.GetStringMapString("account_aliases"))
 	instanceColTags = viper.GetStringSlice("instance_col_tags")
 
 }

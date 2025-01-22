@@ -226,7 +226,7 @@ func (p *picker) render() {
 func (p *picker) Pick(initialFilter string) (*option, *keys.KeyCode) {
 	p.term = initialFilter
 	p.filter()
-	if len( p.filtered ) > p.initialIndex {
+	if len(p.filtered) > p.initialIndex {
 		p.selectedIndex = p.initialIndex
 	} else {
 		p.selectedIndex = 0
