@@ -16,6 +16,7 @@ type picker struct {
 	actions        []action
 	options        []option
 	filtered       []*option
+	initialIndex   int
 	selectedIndex  int
 	term           string
 	filterStrategy string
@@ -44,6 +45,7 @@ func NewPicker() *picker {
 		actions:        []action{},
 		options:        []option{},
 		filtered:       []*option{},
+		initialIndex:   0,
 		selectedIndex:  0,
 		title:          "Please Pick One",
 		term:           "",
@@ -74,6 +76,10 @@ func (p *picker) WithEmptyMessage(emptyMessage string) {
 
 func (p *picker) WithTitle(title string) {
 	p.title = title
+}
+
+func (p *picker) WithInitialIndex(index int) {
+	p.initialIndex = index
 }
 
 func (p *picker) WithHeaders(headers ...string) {
@@ -220,6 +226,11 @@ func (p *picker) render() {
 func (p *picker) Pick(initialFilter string) (*option, *keys.KeyCode) {
 	p.term = initialFilter
 	p.filter()
+	if len( p.filtered ) > p.initialIndex {
+		p.selectedIndex = p.initialIndex
+	} else {
+		p.selectedIndex = 0
+	}
 	ansi.HideCursor()
 	defer ansi.ClearDown()
 	defer ansi.ShowCursor()
