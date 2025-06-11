@@ -1,14 +1,14 @@
 package picker
 
 import (
-	"sort"
 	"strings"
 
 	"atomicgo.dev/keyboard"
 	"atomicgo.dev/keyboard/keys"
-	"github.com/lithammer/fuzzysearch/fuzzy"
+
 	"github.com/null93/aws-knox/pkg/ansi"
 	"github.com/null93/aws-knox/pkg/color"
+	"github.com/null93/aws-knox/pkg/cosine"
 	. "github.com/null93/aws-knox/sdk/style"
 )
 
@@ -32,6 +32,7 @@ type picker struct {
 type option struct {
 	Columns []string
 	Value   interface{}
+	Debug   string
 }
 
 type action struct {
@@ -131,15 +132,27 @@ func (p *picker) filter() {
 				p.filtered = append(p.filtered, &p.options[i])
 				continue
 			}
-			fullValue := strings.Join(option.Columns, " ")
+			fullValue := strings.ToLower(strings.Join(option.Columns, " "))
 			fullValues = append(fullValues, fullValue)
 			optionsMap[fullValue] = &p.options[i]
 		}
 		if p.term != "" {
-			ranks := fuzzy.RankFindFold(p.term, fullValues)
-			sort.Sort(ranks)
-			for _, rank := range ranks {
-				p.filtered = append(p.filtered, optionsMap[rank.Target])
+			ngramSize := 3
+			results := cosine.Search(fullValues, strings.ToLower(p.term), ngramSize)
+			averageSimilarity := 0.0
+			minimumSimilarity := 0.15
+			for _, result := range results {
+				averageSimilarity += result.Similarity
+			}
+			if len(results) > 0 {
+				averageSimilarity /= float64(len(results))
+			}
+			for _, result := range results {
+				foundOption := optionsMap[result.Text]
+				// foundOption.Debug = fmt.Sprintf("%t - %f", result.SubString, result.Similarity)
+				if (result.Similarity >= averageSimilarity && result.Similarity > minimumSimilarity) || len(p.term) < ngramSize {
+					p.filtered = append(p.filtered, foundOption)
+				}
 			}
 		}
 	} else {
@@ -195,6 +208,9 @@ func (p *picker) render() {
 		}
 		for i, col := range option.Columns {
 			rowStyle.Printf(" %-*s ", p.longestCols[i], col)
+		}
+		if option.Debug != "" {
+			rowStyle.Printf("%s", darkGray(" DEBUG: "+option.Debug+" "))
 		}
 		rowStyle.Printfln("")
 	}
