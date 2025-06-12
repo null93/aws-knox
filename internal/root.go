@@ -26,6 +26,7 @@ var (
 	region            string
 	accountAliases    map[string]string
 	instanceColTags   []string
+	format            = "json"
 )
 
 const (

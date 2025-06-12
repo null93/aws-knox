@@ -40,14 +40,22 @@ var lastUsedCmd = &cobra.Command{
 				ExitWithError(6, "failed to save credentials", err)
 			}
 		}
-		if json, err = role.Credentials.ToJSON(); err != nil {
-			ExitWithError(7, "failed to serialize role credentials", err)
+		if format == "env" {
+			fmt.Printf("export AWS_ACCESS_KEY_ID=%q\n", role.Credentials.AccessKeyId)
+			fmt.Printf("export AWS_SECRET_ACCESS_KEY=%q\n", role.Credentials.SecretAccessKey)
+			fmt.Printf("export AWS_SESSION_TOKEN=%q\n", role.Credentials.SessionToken)
+		} else {
+			if json, err = role.Credentials.ToJSON(); err != nil {
+				ExitWithError(7, "failed to serialize role credentials", err)
+			} else {
+				fmt.Println(json)
+			}
 		}
-		fmt.Println(json)
 	},
 }
 
 func init() {
 	RootCmd.AddCommand(lastUsedCmd)
 	lastUsedCmd.Flags().SortFlags = true
+	lastUsedCmd.Flags().StringVarP(&format, "format", "f", format, "Output format (json or env)")
 }
