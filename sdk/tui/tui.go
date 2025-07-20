@@ -96,6 +96,24 @@ func SelectSession(sessions credentials.Sessions) (string, string, error) {
 	return selection.Value.(string), "", nil
 }
 
+func isChanClosed(ch <-chan []credentials.Account) bool {
+	select {
+	case <-ch:
+		return true
+	default:
+	}
+	return false
+}
+
+func isErrorChanClosed(ch <-chan error) bool {
+	select {
+	case <-ch:
+		return true
+	default:
+	}
+	return false
+}
+
 func SelectAccount(session *credentials.Session, accountAliases map[string]string) (string, string, error) {
 	p := picker.NewPicker()
 	p.WithMaxHeight(MaxItemsToShow)
@@ -111,13 +129,15 @@ func SelectAccount(session *credentials.Session, accountAliases map[string]strin
 
 	go func() {
 		err := session.GetAccountsStream(func(accounts []credentials.Account) {
-			accountCh <- accounts
+			if !isChanClosed(accountCh) {
+				accountCh <- accounts
+			}
 		})
-		close(accountCh)
 		if err != nil {
-			errCh <- err
+			if !isErrorChanClosed(errCh) {
+				errCh <- err
+			}
 		}
-		close(errCh)
 	}()
 
 	go func() {
@@ -149,6 +169,8 @@ func SelectAccount(session *credentials.Session, accountAliases map[string]strin
 	}()
 
 	selection, firedKeyCode := p.Pick("")
+	close(accountCh)
+	close(errCh)
 
 	if firedKeyCode != nil && *firedKeyCode == keys.Esc {
 		return "", "back", nil
