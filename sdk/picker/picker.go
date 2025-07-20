@@ -27,6 +27,7 @@ type picker struct {
 	windowStart    int
 	windowEnd      int
 	headers        []string
+	loading        bool
 }
 
 type option struct {
@@ -57,6 +58,7 @@ func NewPicker() *picker {
 		windowStart:    0,
 		windowEnd:      5,
 		headers:        []string{},
+		loading:        false,
 	}
 	return &p
 }
@@ -108,14 +110,16 @@ func (p *picker) AddOption(value interface{}, cols ...string) {
 			p.longestCols[i] = len(label)
 		}
 	}
-	p.term = ""
-	p.selectedIndex = 0
 	p.options = append(p.options, o)
 	p.filtered = append(p.filtered, &o)
 }
 
 func (p *picker) AddAction(key keys.KeyCode, name string, description string) {
 	p.actions = append(p.actions, action{key, name, description})
+}
+
+func (p *picker) SetLoading(loading bool) {
+	p.loading = loading
 }
 
 func (p *picker) filter() {
@@ -219,7 +223,11 @@ func (p *picker) render() {
 	} else {
 		DefaultStyle.Printfln("")
 	}
-	helpMenu := darkGray(" %d/%d items •", len(p.filtered), len(p.options))
+	itemsLabel := "items"
+	if p.loading {
+		itemsLabel = "items (loading)"
+	}
+	helpMenu := darkGray(" %d/%d %s •", len(p.filtered), len(p.options), itemsLabel)
 	helpMenu += lightGray(" ↑ ") + darkGray("up •")
 	helpMenu += lightGray(" ↓ ") + darkGray("down •")
 	helpMenu += lightGray(" enter ") + darkGray("choose •")
@@ -312,4 +320,29 @@ func (p *picker) Pick(initialFilter string) (*option, *keys.KeyCode) {
 		return nil, firedActionKeyCode
 	}
 	return p.filtered[p.selectedIndex], firedActionKeyCode
+}
+
+func (p *picker) Update() {
+	var selectedValue interface{}
+	if p.selectedIndex >= 0 && p.selectedIndex < len(p.filtered) {
+		selectedValue = p.filtered[p.selectedIndex].Value
+	}
+	previousTerm := p.term
+	previousWindowStart := p.windowStart
+	previousWindowEnd := p.windowEnd
+
+	p.filter()
+
+	// Try to restore selection by value
+	p.selectedIndex = 0
+	for i, o := range p.filtered {
+		if selectedValue != nil && o.Value == selectedValue {
+			p.selectedIndex = i
+			break
+		}
+	}
+	p.term = previousTerm
+	p.windowStart = previousWindowStart
+	p.windowEnd = previousWindowEnd
+	p.render()
 }

@@ -388,8 +388,7 @@ func (s *Session) RefreshToken() error {
 	return nil
 }
 
-func (s *Session) GetAccounts() (Accounts, error) {
-	accounts := Accounts{}
+func (s *Session) GetAccountsStream(onAccounts func([]Account)) error {
 	options := sso.Options{Region: s.Region}
 	client := sso.New(options)
 	params := sso.ListAccountsInput{AccessToken: &s.ClientToken.AccessToken}
@@ -397,8 +396,9 @@ func (s *Session) GetAccounts() (Accounts, error) {
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(context.TODO())
 		if err != nil {
-			return accounts, err
+			return err
 		}
+		accounts := []Account{}
 		for _, details := range page.AccountList {
 			account := Account{
 				Id:    aws.ToString(details.AccountId),
@@ -407,8 +407,11 @@ func (s *Session) GetAccounts() (Accounts, error) {
 			}
 			accounts = append(accounts, account)
 		}
+		if len(accounts) > 0 && onAccounts != nil {
+			onAccounts(accounts)
+		}
 	}
-	return accounts, nil
+	return nil
 }
 
 func (s *Session) GetRoles(accountId string) (Roles, error) {

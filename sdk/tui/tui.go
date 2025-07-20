@@ -97,10 +97,6 @@ func SelectSession(sessions credentials.Sessions) (string, string, error) {
 }
 
 func SelectAccount(session *credentials.Session, accountAliases map[string]string) (string, string, error) {
-	accountIds, err := session.GetAccounts()
-	if err != nil {
-		return "", "", err
-	}
 	p := picker.NewPicker()
 	p.WithMaxHeight(MaxItemsToShow)
 	p.WithFilterStrategy(FilterStrategy)
@@ -108,16 +104,52 @@ func SelectAccount(session *credentials.Session, accountAliases map[string]strin
 	p.WithTitle("Pick Account")
 	p.WithHeaders("Account ID", "Alias/Name", "Email")
 	p.AddAction(keys.Esc, "esc", "go back")
-	for _, account := range accountIds {
-		name := account.Name
-		if val, ok := accountAliases[account.Id]; ok {
-			if strings.TrimSpace(val) != "" {
-				name = val
-			}
+	p.SetLoading(true)
+
+	accountCh := make(chan []credentials.Account)
+	errCh := make(chan error, 1)
+
+	go func() {
+		err := session.GetAccountsStream(func(accounts []credentials.Account) {
+			accountCh <- accounts
+		})
+		close(accountCh)
+		if err != nil {
+			errCh <- err
 		}
-		p.AddOption(account.Id, account.Id, name, account.Email)
-	}
+		close(errCh)
+	}()
+
+	go func() {
+	loop:
+		for {
+			select {
+			case accounts, ok := <-accountCh:
+				if !ok {
+					break loop
+				}
+				for _, account := range accounts {
+					name := account.Name
+					if val, ok := accountAliases[account.Id]; ok {
+						if strings.TrimSpace(val) != "" {
+							name = val
+						}
+					}
+					p.AddOption(account.Id, account.Id, name, account.Email)
+				}
+			case err := <-errCh:
+				if err != nil {
+					break loop
+				}
+			}
+			p.Update()
+		}
+		p.SetLoading(false)
+		p.Update()
+	}()
+
 	selection, firedKeyCode := p.Pick("")
+
 	if firedKeyCode != nil && *firedKeyCode == keys.Esc {
 		return "", "back", nil
 	}
