@@ -19,6 +19,7 @@ var (
 	selectCachedFirst bool   = false
 	connectUid        uint32 = 0
 	lastUsed          bool   = false
+	doNotCache        bool   = false
 	sessionName       string
 	accountId         string
 	roleName          string
@@ -132,8 +133,10 @@ func SelectRoleCredentialsStartingFromSession() (string, *credentials.Role) {
 		if err = session.RefreshRoleCredentials(role); err != nil {
 			ExitWithError(9, "failed to get credentials", err)
 		}
-		if err = role.Credentials.Save(session.Name, role.CacheKey()); err != nil {
-			ExitWithError(10, "failed to save credentials", err)
+		if !doNotCache {
+			if err = role.Credentials.Save(session.Name, role.CacheKey()); err != nil {
+				ExitWithError(10, "failed to save credentials", err)
+			}
 		}
 	}
 	if err := role.MarkLastUsed(); err != nil {
@@ -168,8 +171,10 @@ func SelectRoleCredentialsStartingFromCache() (string, *credentials.Role) {
 		if err = session.RefreshRoleCredentials(role); err != nil {
 			ExitWithError(16, "failed to get credentials", err)
 		}
-		if err = role.Credentials.Save(session.Name, role.CacheKey()); err != nil {
-			ExitWithError(17, "failed to save credentials", err)
+		if !doNotCache {
+			if err = role.Credentials.Save(session.Name, role.CacheKey()); err != nil {
+				ExitWithError(17, "failed to save credentials", err)
+			}
 		}
 	}
 	if err = role.MarkLastUsed(); err != nil {

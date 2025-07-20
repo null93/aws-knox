@@ -65,4 +65,5 @@ func init() {
 	selectCmd.Flags().StringVarP(&sessionName, "sso-session", "s", sessionName, "SSO session name")
 	selectCmd.Flags().StringVarP(&accountId, "account-id", "a", accountId, "AWS account ID")
 	selectCmd.Flags().StringVarP(&roleName, "role-name", "r", roleName, "AWS role name")
+	selectCmd.Flags().BoolVarP(&doNotCache, "no-cache", "n", doNotCache, "Do not cache credentials")
 }
