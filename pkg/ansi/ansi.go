@@ -45,3 +45,7 @@ func NormalBuffer() {
 func MoveCursorUp(n int) {
 	fmt.Fprintf(Writer, "\033[%dA", n)
 }
+
+func MoveCursorToStart() {
+	fmt.Fprint(Writer, "\r")
+}

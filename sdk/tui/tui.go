@@ -59,6 +59,7 @@ func ClientLogin(session *credentials.Session) error {
 		}
 		err = session.WaitForToken(deviceCode)
 		ansi.MoveCursorUp(6)
+		ansi.MoveCursorToStart()
 		ansi.ClearDown()
 		if err != nil {
 			return err
