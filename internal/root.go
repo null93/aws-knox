@@ -14,20 +14,21 @@ import (
 )
 
 var (
-	Version           string = "0.0.0"
-	debug             bool   = false
-	selectCachedFirst bool   = false
-	connectUid        uint32 = 0
-	lastUsed          bool   = false
-	doNotCache        bool   = false
-	sessionName       string
-	accountId         string
-	roleName          string
-	instanceId        string
-	region            string
-	accountAliases    map[string]string
-	instanceColTags   []string
-	format            = "json"
+	Version             string = "0.0.0"
+	debug               bool   = false
+	selectCachedFirst   bool   = false
+	connectUid          uint32 = 0
+	lastUsed            bool   = false
+	doNotCache          bool   = false
+	sessionName         string
+	accountId           string
+	roleName            string
+	instanceId          string
+	region              string
+	accountAliases      map[string]string
+	instanceColTags     []string
+	instanceColMaxWidth int
+	format              = "json"
 )
 
 const (
@@ -205,6 +206,7 @@ func setupConfigFile() {
 	viper.SetDefault("max_items_to_show", 10)
 	viper.SetDefault("account_aliases", map[string]string{})
 	viper.SetDefault("instance_col_tags", []string{"Instance Type", "Private IP", "Public IP", "Name"})
+	viper.SetDefault("instance_col_max_width", 36)
 	viper.SafeWriteConfig()
 	viper.ReadInConfig()
 	tui.MaxItemsToShow = viper.GetInt("max_items_to_show")
@@ -213,7 +215,7 @@ func setupConfigFile() {
 	connectUid = viper.GetUint32("default_connect_uid")
 	accountAliases = padAccountNumbers(viper.GetStringMapString("account_aliases"))
 	instanceColTags = viper.GetStringSlice("instance_col_tags")
-
+	instanceColMaxWidth = viper.GetInt("instance_col_max_width")
 }
 
 func init() {

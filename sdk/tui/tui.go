@@ -223,7 +223,7 @@ func cutOffInMiddle(s string, n int) string {
 	return s
 }
 
-func SelectInstance(role *credentials.Role, region, initialFilter string, instanceColTags []string) (string, string, error) {
+func SelectInstance(role *credentials.Role, region, initialFilter string, instanceColTags []string, instanceColMaxWidth int) (string, string, error) {
 	instances, err := role.GetManagedInstances(region)
 	if err != nil {
 		return "", "", err
@@ -255,7 +255,7 @@ func SelectInstance(role *credentials.Role, region, initialFilter string, instan
 			default:
 				value = instance.Tags[tag]
 			}
-			value = cutOffInMiddle(value, 36)
+			value = cutOffInMiddle(value, instanceColMaxWidth)
 			values = append(values, value)
 		}
 		p.AddOption(instance.Id, values...)
