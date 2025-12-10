@@ -135,7 +135,17 @@ var connectCmd = &cobra.Command{
 			command.Stdin = os.Stdin
 			command.Stdout = os.Stdout
 			command.Stderr = os.Stderr
-			command.SysProcAttr = &syscall.SysProcAttr{Setpgid: true, Foreground: true}
+			command.Env = append(
+				os.Environ(),
+				"AWS_REGION="+region,
+				"AWS_ACCESS_KEY_ID="+role.Credentials.AccessKeyId,
+				"AWS_SECRET_ACCESS_KEY="+role.Credentials.SecretAccessKey,
+				"AWS_SESSION_TOKEN="+role.Credentials.SessionToken,
+			)
+			command.SysProcAttr = &syscall.SysProcAttr{
+				Setpgid:    true,
+				Foreground: true,
+			}
 			if err = command.Run(); err != nil {
 				ExitWithError(22, "failed to run session-manager-plugin", err)
 			}
