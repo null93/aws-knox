@@ -116,7 +116,7 @@ var connectCmd = &cobra.Command{
 			DefaultStyle.Printfln("%s %s", title("Role Name:   "), gray(role.Name))
 			DefaultStyle.Printfln("%s %s", title("Instance ID: "), yellow(instanceId))
 
-			details, err := role.StartSession(instanceId, connectUid)
+			details, err := role.StartSession(region, instanceId, connectUid)
 			if err != nil {
 				ExitWithError(20, "failed to start ssm session", err)
 			}

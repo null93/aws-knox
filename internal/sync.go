@@ -40,7 +40,7 @@ var (
 
 func rsyncInit(role *credentials.Role, instanceId string) {
 	var binaryPath string
-	details, err := role.StartCommand(instanceId, strings.ReplaceAll(RSYNC_INIT_SCRIPT, "\n", " "))
+	details, err := role.StartCommand(region, instanceId, strings.ReplaceAll(RSYNC_INIT_SCRIPT, "\n", " "))
 	if err != nil {
 		ExitWithError(20, "failed to start ssm session", err)
 	}
@@ -77,7 +77,7 @@ func rsyncStart(role *credentials.Role, instanceId string) {
 	var binaryPath string
 	var configEncoded = base64.StdEncoding.EncodeToString([]byte(RSYNC_CONFIG))
 	var startCommand = fmt.Sprintf("rsync --daemon --port=%d --log-file=/dev/null --config=/tmp/knox-rsyncd.conf --dparam=pidfile=/run/knox-rsyncd.pid", rsyncPort)
-	details, err := role.StartCommand(instanceId, fmt.Sprintf("echo %s | base64 -d > /tmp/knox-rsyncd.conf; %s || (echo 'EXIT_CODE: 47' || exit 47)", configEncoded, startCommand))
+	details, err := role.StartCommand(region, instanceId, fmt.Sprintf("echo %s | base64 -d > /tmp/knox-rsyncd.conf; %s || (echo 'EXIT_CODE: 47' || exit 47)", configEncoded, startCommand))
 	if err != nil {
 		ExitWithError(20, "failed to start ssm session", err)
 	}
@@ -109,7 +109,7 @@ func rsyncClean(role *credentials.Role, instanceId string) {
 	var binaryPath string
 	removeOld := "rm -f /tmp/knox-rsyncd.conf;"
 	killOld := "if [ -f /run/knox-rsyncd.pid ]; then kill -9 $(cat /run/knox-rsyncd.pid); rm -f /run/knox-rsyncd.pid; fi;"
-	details, err := role.StartCommand(instanceId, removeOld+killOld)
+	details, err := role.StartCommand(region, instanceId, removeOld+killOld)
 	if err != nil {
 		ExitWithError(20, "failed to start ssm session", err)
 	}
@@ -138,7 +138,7 @@ func rsyncClean(role *credentials.Role, instanceId string) {
 
 func rsyncPortForward(role *credentials.Role, instanceId string) {
 	var binaryPath string
-	details, err := role.StartPortForward(instanceId, rsyncPort, localPort)
+	details, err := role.StartPortForward(region, instanceId, rsyncPort, localPort)
 	if err != nil {
 		ExitWithError(20, "failed to start ssm session", err)
 	}
